@@ -23,6 +23,7 @@
 
 #include "tinyproxy.h"
 
+#include "conns.h"
 #include "buffer.h"
 #include "heap.h"
 #include "log.h"
@@ -201,8 +202,7 @@ static struct bufline_s *remove_from_buffer(struct buffer_s *buffptr)
  * Reads the bytes from the socket, and adds them to the buffer.
  * Takes a connection and returns the number of bytes read.
  */
-#define READ_BUFFER_SIZE (1024 * 2)
-ssize_t read_buffer(int fd, struct buffer_s * buffptr)
+ssize_t read_buffer(int fd, struct buffer_s * buffptr, struct conn_s * connptr)
 {
   ssize_t bytesin;
   unsigned char buffer[READ_BUFFER_SIZE];
@@ -216,14 +216,21 @@ ssize_t read_buffer(int fd, struct buffer_s * buffptr)
   if (buffptr->size >= MAXBUFFSIZE)
     return 0;
 
-  bytesin = read(fd, buffer, READ_BUFFER_SIZE);
+  bytesin = recv(fd, buffer, READ_BUFFER_SIZE, 0);
 
   if (bytesin > 0) {
+#ifdef FTP_SUPPORT
+    if (connptr->ftp_isdir) {
+      if (add_to_buffer_formatted(buffptr, buffer, bytesin, connptr) < 0) {
+	log_message(LOG_ERR, "readbuff: add_to_buffer_formatted() error.");
+	return -1;
+      }
+    } else
+#endif
     if (add_to_buffer(buffptr, buffer, bytesin) < 0) {
       log_message(LOG_ERR, "readbuff: add_to_buffer() error.");
       return -1;
     }
-
     return bytesin;
   } else {
     if (bytesin == 0) {

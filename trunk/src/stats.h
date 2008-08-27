@@ -28,7 +28,8 @@ typedef enum {
   STAT_OPEN,			/* connection opened */
   STAT_CLOSE,			/* connection closed */
   STAT_REFUSE,			/* connection refused (to outside world) */
-  STAT_DENIED			/* connection denied to tinyproxy itself */
+  STAT_DENIED,			/* connection denied to tinyproxy itself */
+  STAT_OFCDMATCH		/* connection matched by ofcd */
 } status_t;
 
 /*

@@ -34,18 +34,43 @@
  *
  * Return a negative if there is a problem.
  */
-static int lookup_domain(struct in_addr *addr, const char *domain)
+static int
+lookup_domain(struct in_addr *addr, const char *domain, char *errbuf,
+	      size_t errbuflen)
 {
-  struct hostent *result;
+  struct hostent ret, *result = NULL;
+  int h_err;
+  int buflen = 1024, retval = -1;
+  char *buf, *tmp;
 
   assert(domain != NULL);
 
-  result = gethostbyname(domain);
-  if (result) {
+  buf = safemalloc(buflen);
+
+  while ((retval = gethostbyname_r(domain, &ret, buf, buflen,
+				   &result, &h_err)) == ERANGE) {
+    buflen *= 2;
+    if ((tmp = saferealloc(buf, buflen)) == NULL) {
+      snprintf(errbuf, errbuflen, "Could not lookup address \"%s\". %s",
+	       domain, strerror(errno));
+      log_message(LOG_CONN, "%s", errbuf);
+      goto COMMON_EXIT;
+    }
+    buf = tmp;
+  }
+
+  if (!retval) {
     memcpy(addr, result->h_addr_list[0], result->h_length);
-    return 0;
-  } else
-    return -1;
+  } else {
+    snprintf(errbuf, errbuflen, "Could not lookup address \"%s\". %s",
+	     domain, hstrerror(h_err));
+    log_message(LOG_CONN, "%s", errbuf);
+  }
+
+COMMON_EXIT:
+
+  safefree(buf);
+  return retval;
 }
 
 /* This routine is so old I can't even remember writing it.  But I do
@@ -59,7 +84,7 @@ static int lookup_domain(struct in_addr *addr, const char *domain)
  * dotted-decimal form before it does a name lookup.
  *      - rjkaes
  */
-int opensock(char *ip_addr, uint16_t port)
+int opensock(char *ip_addr, uint16_t port, char *errbuf, size_t errbuflen)
 {
   int sock_fd;
   struct sockaddr_in port_info;
@@ -67,6 +92,8 @@ int opensock(char *ip_addr, uint16_t port)
   int ret;
 
   assert(ip_addr != NULL);
+  assert(errbuf != NULL);
+  assert(errbuflen > 0);
   assert(port > 0);
 
   memset((struct sockaddr *) &port_info, 0, sizeof(port_info));
@@ -74,17 +101,18 @@ int opensock(char *ip_addr, uint16_t port)
   port_info.sin_family = AF_INET;
 
   /* Lookup and return the address if possible */
-  ret = lookup_domain(&port_info.sin_addr, ip_addr);
+  ret = lookup_domain(&port_info.sin_addr, ip_addr, errbuf, errbuflen);
 
   if (ret < 0) {
-    log_message(LOG_ERR, "opensock: Could not lookup address \"%s\".", ip_addr);
+    log_message(LOG_ERR, "opensock: %s", errbuf);
     return -1;
   }
 
   port_info.sin_port = htons(port);
 
   if ((sock_fd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
-    log_message(LOG_ERR, "opensock: socket() error \"%s\".", strerror(errno));
+    snprintf(errbuf, errbuflen, "socket() error \"%s\".", strerror(errno));
+    log_message(LOG_ERR, "opensock: %s", errbuf);
     return -1;
   }
 
@@ -96,14 +124,17 @@ int opensock(char *ip_addr, uint16_t port)
 
     ret = bind(sock_fd, (struct sockaddr *) &bind_addr, sizeof(bind_addr));
     if (ret < 0) {
-      log_message(LOG_ERR, "Could not bind local address \"%\" because of %s",
-		  config.bind_address, strerror(errno));
+      snprintf(errbuf, errbuflen,
+	       "Could not bind local address \"%s\" because of %s",
+	       config.bind_address, strerror(errno));
+      log_message(LOG_ERR, "opensock: %s", errbuf);
       return -1;
     }
   }
 
   if (connect(sock_fd, (struct sockaddr *) &port_info, sizeof(port_info)) < 0) {
-    log_message(LOG_ERR, "opensock: connect() error \"%s\".", strerror(errno));
+    snprintf(errbuf, errbuflen, "connect() error \"%s\".", strerror(errno));
+    log_message(LOG_ERR, "opensock: %s", errbuf);
     return -1;
   }
 
@@ -187,7 +218,7 @@ int listen_sock(uint16_t port, socklen_t * addrlen)
 int getpeer_information(int fd, char *ipaddr, char *string_addr)
 {
   struct sockaddr_in name;
-  size_t namelen = sizeof(name);
+  socklen_t namelen = sizeof(name);
   struct hostent *result;
 
   assert(fd >= 0);

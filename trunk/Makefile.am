@@ -11,6 +11,7 @@ PACKAGING = $(REDHAT)
 EXTRA_DIST = TODO $(PACKAGING)
 SUBDIRS = src doc
 
+ACLOCAL_AMFLAGS = -I m4
 install-data-local: tinyproxy-configure-file tinyproxy-html-files
 
 # Install the configuration file if it doesn't already exist

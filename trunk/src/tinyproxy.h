@@ -25,14 +25,25 @@
 #define MAXBUFFSIZE	((size_t)(1024 * 96))	/* Max size of buffer */
 #define MAX_IDLE_TIME 	(60 * 10)	/* 10 minutes of no activity */
 
+/* Name to serve local request on */
+#define INTERNALNAME  "tinyproxy.intern"
 /*
  * Even if upstream support is not compiled into tinyproxy, this
  * structure still needs to be defined.
  */
+
+#define FTP_SUPPORT 1
+
+typedef enum {
+  FILTER_ALLOW,
+  FILTER_DENY,
+} filter_policy_t;
+
 struct upstream {
   struct upstream *next;
   char *domain;			/* optional */
   char *host;
+  char *authentication;
   int port;
   in_addr_t ip, mask;
 };
@@ -48,10 +59,19 @@ struct config_s {
   char *group;
   char *ipAddr;
 #ifdef FILTER_ENABLE
-  char *filter;
+  /* path to the ofcd unix domain socket */
+  char *ofcdsocket;
+  /* path to a file containing the ofcd category descriptions */
+  char *ofcdcategories;
+  struct filter_s {
+    char *expression;
+    char *aclname;
+  } **filters;
+  unsigned int filter;		/* boolean */
   unsigned int filter_url;	/* boolean */
   unsigned int filter_extended;	/* boolean */
   unsigned int filter_casesensitive;	/* boolean */
+  filter_policy_t default_policy;
 #endif				/* FILTER_ENABLE */
 #ifdef XTINYPROXY_ENABLE
   char *my_domain;

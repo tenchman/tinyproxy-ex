@@ -46,12 +46,10 @@ static struct keyword keywords[] = {
 	{ "filter",		 KW_FILTER },
         { "filterurls",          KW_FILTERURLS },
         { "filterextended",      KW_FILTEREXTENDED },
-        { "filterdefaultdeny",   KW_FILTER_DEFAULT_DENY },
+        { "filterdefaultdeny",   KW_FILTER_DENY },
         { "filtercasesensitive", KW_FILTER_CASESENSITIVE },
 	{ "xtinyproxy",		 KW_XTINYPROXY },
         { "upstream",            KW_UPSTREAM },
-	{ "allow",		 KW_ALLOW },
-        { "deny",                KW_DENY },
         { "connectport",         KW_CONNECTPORT },
         { "bind",                KW_BIND },
         { "viaproxyname",        KW_VIA_PROXY_NAME },
@@ -59,6 +57,9 @@ static struct keyword keywords[] = {
 	{ "errorfile",	         KW_ERRORPAGE },
 	{ "defaulterrorfile",    KW_DEFAULT_ERRORPAGE },
 	{ "statfile",            KW_STATPAGE },
+	{ "ofcdsocket",		 KW_OFCD_SOCKET },
+	{ "ofcdcategories",	 KW_OFCD_CATEGORIES },
+	{ "acl",		 KW_ACL },
 
         /* loglevel and the settings */
         { "loglevel",            KW_LOGLEVEL },
@@ -69,12 +70,18 @@ static struct keyword keywords[] = {
 	{ "connect",		 KW_LOG_CONNECT },
 	{ "info",		 KW_LOG_INFO },
 
+	{ "ofcd",                KW_OFCD },
+	{ "allow",               KW_ALLOW },
+	{ "deny",		 KW_DENY },
+
+	{ "src",                 KW_SRC },
+	{ "dst",                 KW_DST },
+
 	/* on/off switches */
 	{ "yes",		 KW_YES },
 	{ "on",			 KW_YES },
 	{ "no",			 KW_NO },
 	{ "off",		 KW_NO }
-	
 }; 
 
 #define YY_NO_UNPUT 1
@@ -90,7 +97,7 @@ static void append_char(char c);
 
 %}
 
-%option noyywrap batch yylineno
+%option noyywrap batch yylineno nounput
 
 white		[ \t]
 digit		[0-9]
@@ -128,10 +135,12 @@ word		[^ \#'"\(\)\{\}\\;\n\t,|\.]
 			}
 <string>[^"\\]+		{ append_string(strlen(yytext), yytext); }
 
-
+({digit}{1,3}\.){3}{digit}{1,3}-({digit}{1,3}\.){3}{digit}{1,3} { 
+				yylval.cptr = strdup(yytext);
+				return NETWORK_ADDRESSRANGE;
+			}
 ({digit}{1,3}\.){3}{digit}{1,3} { yylval.cptr = strdup(yytext); return NUMERIC_ADDRESS; }
-({digit}{1,3}\.){3}{digit}{1,3}\/{digit}+ { yylval.cptr = strdup(yytext); return NETMASK_ADDRESS; }
-
+({digit}{1,3}\.){3}{digit}{1,3}\/{digit}{1,2} { yylval.cptr = strdup(yytext); return NETMASK_ADDRESS; }
 
 %%
 

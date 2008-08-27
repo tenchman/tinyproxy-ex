@@ -24,7 +24,8 @@
 
 #define MAXLINE (1024 * 4)
 
-extern int opensock(char *ip_addr, uint16_t port);
+extern int opensock(char *ip_addr, uint16_t port, char *errbuf,
+		    size_t errbuflen);
 extern int listen_sock(uint16_t port, socklen_t * addrlen);
 
 extern int socket_nonblocking(int sock);

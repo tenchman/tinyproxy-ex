@@ -52,7 +52,14 @@ struct conn_s *initialize_conn(int client_fd, const char *ipaddr,
 
   connptr->client_fd = client_fd;
   connptr->server_fd = -1;
-
+#ifdef FTP_SUPPORT
+  connptr->server_cfd = -1;
+  connptr->offset = 0;
+  connptr->ftp_path = NULL;
+  connptr->ftp_basedir = NULL;
+  connptr->ftp_greeting = NULL;
+  connptr->ftp_isdir = FALSE;
+#endif
   connptr->cbuffer = cbuffer;
   connptr->sbuffer = sbuffer;
 
@@ -64,7 +71,7 @@ struct conn_s *initialize_conn(int client_fd, const char *ipaddr,
   connptr->error_string = NULL;
   connptr->error_number = -1;
 
-  connptr->connect_method = FALSE;
+  connptr->method = METH_UNKNOWN;
   connptr->show_stats = FALSE;
 
   connptr->protocol.major = connptr->protocol.minor = 0;
@@ -105,7 +112,18 @@ void destroy_conn(struct conn_s *connptr)
     if (close(connptr->server_fd) < 0)
       log_message(LOG_INFO, "Server (%d) close message: %s",
 		  connptr->server_fd, strerror(errno));
-
+#ifdef FTP_SUPPORT
+  if (connptr->server_cfd != -1)
+    if (close(connptr->server_cfd) < 0)
+      log_message(LOG_INFO, "Server cmd (%d) close message: %s",
+		  connptr->server_cfd, strerror(errno));
+  if (connptr->ftp_basedir)
+    safefree(connptr->ftp_basedir);
+  if (connptr->ftp_path)
+    safefree(connptr->ftp_path);
+  if (connptr->ftp_greeting)
+    safefree(connptr->ftp_greeting);
+#endif
   if (connptr->cbuffer)
     delete_buffer(connptr->cbuffer);
   if (connptr->sbuffer)
@@ -133,6 +151,8 @@ void destroy_conn(struct conn_s *connptr)
     safefree(connptr->client_ip_addr);
   if (connptr->client_string_addr)
     safefree(connptr->client_string_addr);
+  if (connptr->aclname)
+    safefree(connptr->aclname);
 
   safefree(connptr);
 

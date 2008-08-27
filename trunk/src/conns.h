@@ -26,17 +26,27 @@
 struct conn_s {
   int client_fd;
   int server_fd;
+  int server_cfd;
 
   struct buffer_s *cbuffer;
   struct buffer_s *sbuffer;
 
   /* The request line (first line) from the client */
   char *request_line;
+  char *aclname;
 
+  /* method and filetype */
+  enum { METH_UNKNOWN, METH_HTTP, METH_CONNECT, METH_FTP } method;
+#ifdef FTP_SUPPORT
+  int ftp_isdir;
+  char *ftp_basedir;
+  char *ftp_path;
+  char *ftp_greeting;
+  size_t offset;
+#endif
   /* Booleans */
-  unsigned int connect_method;
   unsigned int show_stats;
-
+  unsigned int local_request;
   /*
    * Store the error response if there is one.
    * This structure stores key -> value mappings for substitution

@@ -19,7 +19,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
  */
-
+#include <limits.h>
+#include <sys/mman.h>
 #include "tinyproxy.h"
 
 #include "conns.h"
@@ -53,6 +54,77 @@ send_http_message(struct conn_s *connptr, int http_code,
 
   return 0;
 }
+
+int serve_local_file(struct conn_s *connptr, const char *filename)
+{
+  static char *headers[3] = {
+    "Server: " PACKAGE "/" VERSION,
+    "Content-type: application/octet-stream",
+    "Connection: close"
+  };
+  char path[PATH_MAX], *tmp, *body;
+  http_message_t msg;
+  struct stat st;
+  int ret, fd;
+
+  /* simply do not allow double dots and url encoded stuff */
+  if (strstr(filename, "..") || strchr(filename, '%')) {
+    send_http_message(connptr, 400, "Bad Request", "Bad Request");
+    return -1;
+  }
+
+  if (snprintf(path, PATH_MAX, "/usr/share/tinyproxy/%s", filename) >= PATH_MAX) {
+    send_http_message(connptr, 414, "Request-URI Too Long",
+		      "Request-URI Too Long!");
+    return -1;
+  }
+
+  if (stat(path, &st) == -1) {
+    send_http_message(connptr, 404, "Not Found",
+		      "The ressource you requested was not found on this server!");
+    return -1;
+  }
+
+  if (!S_ISREG(st.st_mode)) {
+    send_http_message(connptr, 403, "Forbidden", "Not a regular file!");
+    return -1;
+  }
+
+  if ((fd = open(path, O_RDONLY)) == -1) {
+    send_http_message(connptr, 403, "Forbidden", "File is protected!");
+    return -1;
+  }
+
+  if ((body = mmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, fd, 0))
+      == MAP_FAILED) {
+    send_http_message(connptr, 403, "Forbidden", "File is protected!");
+    return -1;
+  }
+
+  if ((msg = http_message_create(200, "OK")) == NULL)
+    return -1;
+
+  if (tmp = strrchr(filename, '.')) {
+    if (strcasecmp(tmp, ".css") == 0)
+      headers[1] = "Content-type: text/css";
+    else if (strcasecmp(tmp, ".html") == 0)
+      headers[1] = "Content-type: text/html";
+    else if (strcasecmp(tmp, ".png") == 0)
+      headers[1] = "Content-type: image/png";
+    else if (strcasecmp(tmp, ".jpg") == 0)
+      headers[1] = "Content-type: image/jpg";
+  }
+
+  http_message_add_headers(msg, headers, 3);
+  http_message_set_body(msg, body, st.st_size);
+  ret = http_message_send(msg, connptr->client_fd);
+  http_message_destroy(msg);
+
+  munmap(body, st.st_size);
+
+  return ret;
+}
+
 
 /*
  * Safely creates filename and returns the low-level file descriptor.

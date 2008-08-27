@@ -18,16 +18,14 @@
 #ifndef _TINYPROXY_FILTER_H_
 #define _TINYPROXY_FILTER_H_
 
-typedef enum {
-  FILTER_DEFAULT_ALLOW,
-  FILTER_DEFAULT_DENY,
-} filter_policy_t;
+#define DEFAULT_OFCD_SOCKET_PATH "/tmp/ofcdsock"
+
+typedef enum { FL_NONE, FL_ALLOW, FL_DENY, FL_OFCD, FL_TIME } filtertype_t;
 
 extern void filter_init(void);
 extern void filter_destroy(void);
-extern int filter_domain(const char *host);
-extern int filter_url(const char *url);
+extern int filter_domain(const char *host, const char *aclname, char **status);
 
 extern void filter_set_default_policy(filter_policy_t policy);
-
+extern int add_new_filter(char *aclname, char *expression);
 #endif

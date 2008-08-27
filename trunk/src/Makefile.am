@@ -13,8 +13,8 @@
 # General Public License for more details.
 #
 
-YFLAGS = @YFLAGS@
-LDFLAGS = @LDFLAGS@
+AM_YFLAGS = @YFLAGS@
+AM_LDFLAGS = @LDFLAGS@
 
 sbin_PROGRAMS = tinyproxy
 
@@ -28,6 +28,7 @@ tinyproxy_SOURCES = \
 	daemon.c daemon.h \
 	hashmap.c hashmap.h \
 	heap.c heap.h \
+	ftp.c ftp.h \
 	htmlerror.c htmlerror.h \
 	http_message.c http_message.h \
 	log.c log.h \

@@ -24,15 +24,15 @@
 #include "log.h"
 #include "sock.h"
 
-struct acl_s {
-  acl_access_t acl_access;
-  enum { ACL_STRING, ACL_NUMERIC } type;
-  char *location;
+/* linked list of acl definitions */
+struct extacl_s {
+  char *aclname;
+  enum { ACL_NAME, ACL_NET } type;
+  char *location, *rangeend;
   int netmask;
-  struct acl_s *next;
+  struct extacl_s *next;
 };
-
-static struct acl_s *access_list = NULL;
+static struct extacl_s *extaccess_list;
 
 /*
  * Take a netmask number (between 0 and 32) and returns a network ordered
@@ -46,90 +46,6 @@ static in_addr_t make_netmask(int netmask_num)
 }
 
 /*
- * Inserts a new access control into the list. The function will figure out
- * whether the location is an IP address (with optional netmask) or a
- * domain name.
- *
- * Returns:
- *    -1 on failure
- *     0 otherwise.
- */
-int insert_acl(char *location, acl_access_t access_type)
-{
-  size_t i;
-  struct acl_s **rev_acl_ptr, *acl_ptr, *new_acl_ptr;
-  char *nptr;
-
-  assert(location != NULL);
-
-  /*
-   * First check to see if the location is a string or numeric.
-   */
-  for (i = 0; location[i] != '\0'; i++) {
-    /*
-     * Numeric strings can not contain letters, so test on it.
-     */
-    if (isalpha((unsigned char) location[i])) {
-      break;
-    }
-  }
-
-  /*
-   * Add a new ACL to the list.
-   */
-  rev_acl_ptr = &access_list;
-  acl_ptr = access_list;
-  while (acl_ptr) {
-    rev_acl_ptr = &acl_ptr->next;
-    acl_ptr = acl_ptr->next;
-  }
-  new_acl_ptr = safemalloc(sizeof(struct acl_s));
-  if (!new_acl_ptr) {
-    return -1;
-  }
-
-  new_acl_ptr->acl_access = access_type;
-
-  if (location[i] == '\0') {
-    DEBUG2("ACL \"%s\" is a number.", location);
-
-    /*
-     * We did not break early, so this a numeric location.
-     * Check for a netmask.
-     */
-    new_acl_ptr->type = ACL_NUMERIC;
-    nptr = strchr(location, '/');
-    if (nptr) {
-      *nptr++ = '\0';
-
-      new_acl_ptr->netmask = strtol(nptr, NULL, 10);
-      if (new_acl_ptr->netmask < 0 || new_acl_ptr->netmask > 32) {
-	safefree(new_acl_ptr);
-	return -1;
-      }
-    } else {
-      new_acl_ptr->netmask = 32;
-    }
-  } else {
-    DEBUG2("ACL \"%s\" is a string.", location);
-
-    new_acl_ptr->type = ACL_STRING;
-    new_acl_ptr->netmask = 32;
-  }
-
-  new_acl_ptr->location = safestrdup(location);
-  if (!new_acl_ptr->location) {
-    safefree(new_acl_ptr);
-    return -1;
-  }
-
-  *rev_acl_ptr = new_acl_ptr;
-  new_acl_ptr->next = acl_ptr;
-
-  return 0;
-}
-
-/*
  * This function is called whenever a "string" access control is found in
  * the ACL.  From here we do both a text based string comparison, along with
  * a reverse name lookup comparison of the IP addresses.
@@ -138,6 +54,7 @@ int insert_acl(char *location, acl_access_t access_type)
  *         1 if host is allowed
  *        -1 if no tests match, so skip
  */
+#if 0
 static inline int
 acl_string_processing(struct acl_s *aclptr,
 		      const char *ip_address, const char *string_address)
@@ -199,61 +116,170 @@ STRING_TEST:
   /* Indicate that no tests succeeded, so skip to next control. */
   return -1;
 }
+#endif
+
+/* Extended acl processing */
+
+int insert_extacl(char *aclname, acl_type_t acltype, char *location)
+{
+  size_t i;
+  struct extacl_s **rev_acl_ptr, *acl_ptr, *new_acl_ptr;
+  char *nptr;
+
+  assert(aclname != NULL);
+  assert(location != NULL);
+
+  /*
+   * First check to see if the location is a string or numeric.
+   */
+  for (i = 0; location[i] != '\0'; i++) {
+    /*
+     * Numeric strings can not contain letters, so test on it.
+     */
+    if (isalpha((unsigned char) location[i])) {
+      break;
+    }
+  }
+
+  /*
+   * Add a new ACL to the list.
+   */
+  rev_acl_ptr = &extaccess_list;
+  acl_ptr = extaccess_list;
+  while (acl_ptr) {
+    rev_acl_ptr = &acl_ptr->next;
+    acl_ptr = acl_ptr->next;
+  }
+  new_acl_ptr = safemalloc(sizeof(struct extacl_s));
+  if (!new_acl_ptr) {
+    return -1;
+  }
+
+  if (location[i] == '\0') {
+    DEBUG2("ACL [%s] %d \"%s\" is a number.", aclname, acltype, location);
+
+    /*
+     * We did not break early, so this a numeric location.
+     * Check for a netmask.
+     */
+    new_acl_ptr->type = ACL_NET;
+    nptr = strchr(location, '/');
+    if ((nptr = strchr(location, '/'))) {
+      *nptr++ = '\0';
+
+      new_acl_ptr->netmask = strtol(nptr, NULL, 10);
+      if (new_acl_ptr->netmask < 0 || new_acl_ptr->netmask > 32) {
+	goto ERROROUT;
+      }
+      /*
+       * Check for a ipaddress range */
+    } else if ((nptr = strchr(location, '-'))) {
+      *nptr++ = '\0';
+      if (!(new_acl_ptr->rangeend = safestrdup(nptr)))
+	goto ERROROUT;
+    } else {
+      new_acl_ptr->netmask = 32;
+    }
+  } else {
+    DEBUG2("ACL [%s] %d \"%s\" is a string.", aclname, acltype, location);
+
+    new_acl_ptr->type = ACL_NAME;
+    new_acl_ptr->netmask = 32;
+  }
+
+  if (!(new_acl_ptr->aclname = safestrdup(aclname)))
+    goto ERROROUT;
+
+  if (!(new_acl_ptr->location = safestrdup(location)))
+    goto ERROROUT;
+
+  *rev_acl_ptr = new_acl_ptr;
+  new_acl_ptr->next = acl_ptr;
+
+  return 0;
+
+ERROROUT:
+  if (new_acl_ptr->aclname)
+    safefree(new_acl_ptr->aclname);
+  if (new_acl_ptr->rangeend)
+    safefree(new_acl_ptr->rangeend);
+  safefree(new_acl_ptr);
+  return -1;
+}
+
+
+static int check_netaddr(const char *ip_address, struct extacl_s *aclptr)
+{
+  struct in_addr test_addr, match_addr;
+  in_addr_t netmask_addr;
+
+  inet_aton(ip_address, &test_addr);
+  inet_aton(aclptr->location, &match_addr);
+
+  netmask_addr = make_netmask(aclptr->netmask);
+
+  if ((test_addr.s_addr & netmask_addr) == (match_addr.s_addr & netmask_addr)) {
+    return 1;
+  }
+  return 0;
+}
+
+static int check_netrange(const char *ip_address, struct extacl_s *aclptr)
+{
+  struct in_addr addr;
+  uint32_t start, end, test;
+
+  inet_aton(ip_address, &addr);
+  test = htonl(addr.s_addr);
+  inet_aton(aclptr->location, &addr);
+  start = htonl(addr.s_addr);
+  inet_aton(aclptr->rangeend, &addr);
+  end = htonl(addr.s_addr);
+  if ((test >= start && test <= end) || (test >= end && test <= start))
+    return 1;
+  return 0;
+}
 
 /*
- * Checks whether file descriptor is allowed.
+ * Checks whether an acl is defined
  *
  * Returns:
- *     1 if allowed
- *     0 if denied
+ *     1 if further acl processing is required
+ *     0/1 depending on config->default_policy
  */
-int check_acl(int fd, const char *ip_address, const char *string_address)
+int
+find_extacl(int fd, const char *ip_address, const char *string_address,
+	    char **aclname)
 {
-  struct acl_s *aclptr;
-  int ret;
+  struct extacl_s *aclptr;
 
   assert(fd >= 0);
   assert(ip_address != NULL);
   assert(string_address != NULL);
+  assert(aclname != NULL);
 
   /*
    * If there is no access list allow everything.
    */
-  aclptr = access_list;
+  aclptr = extaccess_list;
   if (!aclptr)
-    return 1;
+    return FILTER_ALLOW;
 
   while (aclptr) {
-    if (aclptr->type == ACL_STRING) {
-      ret = acl_string_processing(aclptr, ip_address, string_address);
-      if (ret == 0)
-	goto UNAUTHORIZED;
-      else if (ret == 1)
-	return 1;
-
+    if (aclptr->type == ACL_NAME) {
+      fprintf(stderr, "%s, string processing not yet implemented\n", __func__);
       aclptr = aclptr->next;
       continue;
-    } else {
-      struct in_addr test_addr, match_addr;
-      in_addr_t netmask_addr;
-
+    } else {			/* ACL_NUMERIC */
       if (ip_address[0] == 0) {
 	aclptr = aclptr->next;
 	continue;
       }
 
-      inet_aton(ip_address, &test_addr);
-      inet_aton(aclptr->location, &match_addr);
-
-      netmask_addr = make_netmask(aclptr->netmask);
-
-      if ((test_addr.s_addr & netmask_addr) ==
-	  (match_addr.s_addr & netmask_addr)) {
-	if (aclptr->acl_access == ACL_DENY)
-	  goto UNAUTHORIZED;
-	else
-	  return 1;
-      }
+      if (aclptr->rangeend && check_netrange(ip_address, aclptr))
+	break;
+      else if (check_netaddr(ip_address, aclptr))
+	break;
     }
 
     /*
@@ -262,11 +288,12 @@ int check_acl(int fd, const char *ip_address, const char *string_address)
     aclptr = aclptr->next;
   }
 
-  /*
-   * Deny all connections by default.
-   */
-UNAUTHORIZED:
-  log_message(LOG_NOTICE, "Unauthorized connection from \"%s\" [%s].",
-	      string_address, ip_address);
-  return 0;
+  if (aclptr) {
+    log_message(LOG_NOTICE, "%s: found acl \"%s:%s\" for connection from %s",
+		__func__, aclptr->aclname, aclptr->location, ip_address);
+    *aclname = safestrdup(aclptr->aclname);
+    return FILTER_ALLOW;
+  }
+  *aclname = NULL;
+  return config.default_policy;
 }

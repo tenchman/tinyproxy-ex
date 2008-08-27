@@ -47,18 +47,26 @@ int yylex(void);
 %token KW_TIMEOUT
 %token KW_USER KW_GROUP
 %token KW_ANONYMOUS KW_XTINYPROXY
-%token KW_FILTER KW_FILTERURLS KW_FILTEREXTENDED KW_FILTER_DEFAULT_DENY
+%token KW_FILTER KW_FILTERURLS KW_FILTEREXTENDED KW_FILTER_DENY
 %token KW_FILTER_CASESENSITIVE
 %token KW_UPSTREAM
 %token KW_CONNECTPORT KW_BIND
 %token KW_STATHOST
-%token KW_ALLOW KW_DENY
 %token KW_ERRORPAGE KW_DEFAULT_ERRORPAGE
 %token KW_STATPAGE
 %token KW_VIA_PROXY_NAME
+%token KW_ACL
+%token KW_OFCD_SOCKET KW_OFCD_CATEGORIES
+%token KW_AUTHENTICATION
 
 /* yes/no switches */
 %token KW_YES KW_NO
+
+/* filter types */
+%token KW_OFCD KW_ALLOW KW_DENY
+
+/* acl types */
+%token KW_SRC KW_DST
 
 /* settings for loglevel */
 %token KW_LOGLEVEL
@@ -69,11 +77,14 @@ int yylex(void);
 %token <cptr> STRING
 %token <cptr> NUMERIC_ADDRESS
 %token <cptr> NETMASK_ADDRESS
+%token <cptr> NETWORK_ADDRESSRANGE
 
 %type <num> yesno
 %type <cptr> string
+%type <cptr> network_addressrange
 %type <cptr> network_address
 %type <cptr> unique_address
+%type <num> acltype
 %type <num> loglevels
 
 %%
@@ -118,10 +129,21 @@ statement
 	| KW_ERRORPAGE NUMBER string	{ add_new_errorpage($3, $2); }
 	| KW_DEFAULT_ERRORPAGE string	{ config.errorpage_undef = $2; }
 	| KW_STATPAGE string	{ config.statpage = $2; }
-	| KW_FILTER string
-	  {
+	| KW_OFCD_SOCKET string		{ config.ofcdsocket = $2; }
+	| KW_OFCD_CATEGORIES string	{ config.ofcdcategories = $2; }
+	| KW_ACL string acltype network_addressrange 
+	  { 
 #ifdef FILTER_ENABLE
-		  config.filter = $2;
+		  insert_extacl($2, $3, $4);
+#else
+	          log_message(LOG_WARNING, "Filter support was not compiled in.");
+#endif
+	  }
+	| KW_FILTER string string
+	  { 
+#ifdef FILTER_ENABLE
+		  config.filter = 1;
+		  add_new_filter($2, $3);
 #else
 	          log_message(LOG_WARNING, "Filter support was not compiled in.");
 #endif
@@ -150,11 +172,11 @@ statement
 		  log_message(LOG_WARNING, "Filter support was not compiled in.");
 #endif
 	  }
-        | KW_FILTER_DEFAULT_DENY yesno
+        | KW_FILTER_DENY yesno
           {
 #ifdef FILTER_ENABLE
 		  if ($2)
-			  filter_set_default_policy(FILTER_DEFAULT_DENY);
+			  filter_set_default_policy(FILTER_DENY);
 #else
 		  log_message(LOG_WARNING, "FIlter support was not compiled in.");
 #endif
@@ -170,7 +192,7 @@ statement
         | KW_UPSTREAM unique_address ':' NUMBER
           {
 #ifdef UPSTREAM_SUPPORT
-		  upstream_add($2, $4, NULL);
+		  upstream_add($2, $4, NULL, NULL);
 #else
                   log_message(LOG_WARNING, "Upstream proxy support was not compiled in.");
 #endif
@@ -178,7 +200,15 @@ statement
 	| KW_UPSTREAM unique_address ':' NUMBER STRING
 	  {
 #ifdef UPSTREAM_SUPPORT
-		  upstream_add($2, $4, $5);
+		  upstream_add($2, $4, $5, NULL);
+#else
+                  log_message(LOG_WARNING, "Upstream proxy support was not compiled in.");
+#endif
+	  }
+	| KW_UPSTREAM unique_address ':' NUMBER STRING STRING
+	  {
+#ifdef UPSTREAM_SUPPORT
+		  upstream_add($2, $4, $5, $6);
 #else
                   log_message(LOG_WARNING, "Upstream proxy support was not compiled in.");
 #endif
@@ -186,7 +216,7 @@ statement
 	| KW_NO KW_UPSTREAM STRING
 	  {
 #ifdef UPSTREAM_SUPPORT
-		  upstream_add(NULL, 0, $3);
+		  upstream_add(NULL, 0, $3, NULL);
 #else
                   log_message(LOG_WARNING, "Upstream proxy support was not compiled in.");
 #endif
@@ -196,8 +226,6 @@ statement
 		  log_message(LOG_INFO, "Establishing listening socket on IP %s", $2);
                   config.ipAddr = $2;
           }
-	| KW_ALLOW network_address	{ insert_acl($2, ACL_ALLOW); }
-	| KW_DENY network_address	{ insert_acl($2, ACL_DENY); }
         | KW_LOGLEVEL loglevels         { set_log_level($2); }
         | KW_CONNECTPORT NUMBER         { add_connect_port_allowed($2); }
         | KW_BIND NUMERIC_ADDRESS
@@ -230,6 +258,11 @@ loglevels
         | KW_LOG_INFO                   { $$ = LOG_INFO; }
         ;
 
+network_addressrange
+	: network_address
+	| NETWORK_ADDRESSRANGE
+	;
+
 network_address
 	: unique_address
 	| NETMASK_ADDRESS
@@ -249,6 +282,11 @@ yesno
 string
 	: IDENTIFIER
 	| STRING
+	;
+
+acltype
+	: KW_SRC			{ $$ = ACL_TYPE_SRC; }
+	| KW_DST			{ $$ = ACL_TYPE_DST; }
 	;
 
 %%

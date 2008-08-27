@@ -18,8 +18,11 @@
 #ifndef _TINYPROXY_BUFFER_H_
 #define _TINYPROXY_BUFFER_H_
 
+#define READ_BUFFER_SIZE (1024 * 2)
+
 /* Forward declaration */
 struct buffer_s;
+struct conn_s;
 
 extern struct buffer_s *new_buffer(void);
 extern void delete_buffer(struct buffer_s *buffptr);
@@ -31,7 +34,8 @@ extern size_t buffer_size(struct buffer_s *buffptr);
 extern int add_to_buffer(struct buffer_s *buffptr, unsigned char *data,
 			 size_t length);
 
-extern ssize_t read_buffer(int fd, struct buffer_s *buffptr);
+extern ssize_t read_buffer(int fd, struct buffer_s *buffptr,
+			   struct conn_s *connptr);
 extern ssize_t write_buffer(int fd, struct buffer_s *buffptr);
 
 #endif				/* __BUFFER_H_ */

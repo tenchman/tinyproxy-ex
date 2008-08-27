@@ -110,11 +110,11 @@ int send_html_file(FILE * infile, struct conn_s *connptr)
       case '}':
 	if (in_variable) {
 	  *p = '\0';
-	  if (!(varval = lookup_variable(connptr, varstart)))
-	    varval = "(unknown)";
-	  writeret = write_message(connptr->client_fd, "%s", varval);
-	  if (writeret)
-	    return (writeret);
+	  if ((varval = lookup_variable(connptr, varstart))) {
+	    writeret = write_message(connptr->client_fd, "%s", varval);
+	    if (writeret)
+	      return (writeret);
+	  }
 	  in_variable = 0;
 	} else {
 	  writeret = write_message(connptr->client_fd, "%c", *p);

@@ -18,6 +18,7 @@ AC_INIT([tinyproxy], [1.6.3], [rjkaes@users.sourceforge.net])
 AC_CONFIG_SRCDIR([src/tinyproxy.c])
 AC_PREREQ(2.52)
 
+AC_CONFIG_MACRO_DIR([m4])
 AC_CANONICAL_TARGET
 
 AH_TEMPLATE([TARGET_SYSTEM],
@@ -28,9 +29,9 @@ AM_INIT_AUTOMAKE($PACKAGE_NAME, $PACKAGE_VERSION)
 AM_CONFIG_HEADER(config.h)
 
 dnl Check if we're compiling on a weird platform :)
-AC_AIX
-AC_GNU_SOURCE
-AC_MINIX
+dnl AC_AIX
+dnl AC_GNU_SOURCE
+dnl AC_MINIX
 
 dnl
 dnl Command line options
@@ -127,6 +128,17 @@ if test x"$upstream_enabled" = x"yes"; then
     AC_DEFINE(UPSTREAM_SUPPORT)
 fi
 
+dnl Include support for ftp?
+AH_TEMPLATE([FTP_SUPPORT],
+            [Include support for ftp.])
+AC_ARG_ENABLE(ftp,
+              [AC_HELP_STRING([--enable-ftp],
+                              [Enable support for ftp (default is NO)])],
+              ftp_enabled=$enableval, ftp_enabled=no)
+if test x"$ftp_enabled" = x"yes"; then
+    AC_DEFINE(FTP_SUPPORT)
+fi
+
 dnl Include the transparent proxy support
 AH_TEMPLATE([TRANSPARENT_PROXY],
 	    [Include support for using tinyproxy as a transparent proxy.])
@@ -215,6 +227,7 @@ esac
 AC_CHECK_HEADER(socks.h, socks_header=yes, socks_header=no)
 
 
+m4_pattern_allow([AC_UNP_CHECK_TYPE])
 dnl
 dnl Checks for types
 dnl

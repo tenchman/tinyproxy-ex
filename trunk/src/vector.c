@@ -1,24 +1,18 @@
-/* $Id$
- *
- * A vector implementation.  The vector can be of an arbitrary length, and
- * the data for each entry is an lump of data (the size is stored in the
- * vector.)
- *
- * Copyright (C) 2002  Robert James Kaes (rjkaes@flarenet.com)
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+/*
+ * $Id$ A vector
+ * implementation.  The vector can be of an arbitrary length, and the data 
+ * for each entry is an lump of data (the size is stored in the vector.)
+ * Copyright (C) 2002 Robert James Kaes (rjkaes@flarenet.com) This
+ * program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope
+ * that it will be useful, but WITHOUT ANY WARRANTY; without even the
+ * implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+ * PURPOSE.  See the GNU General Public License for more details. You
+ * should have received a copy of the GNU General Public License along
+ * with this program; if not, write to the Free Software Foundation, Inc., 
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA 
  */
 
 #include "tinyproxy.h"
@@ -129,15 +123,21 @@ static int vector_insert(vector_t vector, void *data, ssize_t len, int pos)
   entry->len = len;
   entry->next = NULL;
 
-  /* If there is no head or tail, create them */
+  /*
+   * If there is no head or tail, create them 
+   */
   if (!vector->head && !vector->tail)
     vector->head = vector->tail = entry;
   else if (pos == 0) {
-    /* prepend the entry */
+    /*
+     * prepend the entry 
+     */
     entry->next = vector->head;
     vector->head = entry;
   } else {
-    /* append the entry */
+    /*
+     * append the entry 
+     */
     vector->tail->next = entry;
     vector->tail = entry;
   }

@@ -19,8 +19,22 @@
 #ifndef _TINYPROXY_REQS_H_
 #define _TINYPROXY_REQS_H_
 
+/*
+ * This structure holds the information pulled from a URL request.
+ */
+struct request_s {
+  char *method;
+  char *protocol;
+
+  char *host;
+  uint16_t port;
+
+  char *path;
+};
+
 extern void handle_connection(int fd);
 extern void add_connect_port_allowed(int port);
-extern void upstream_add(const char *host, int port, const char *domain);
+extern void upstream_add(const char *host, int port, const char *domain,
+			 const char *authentication);
 
 #endif

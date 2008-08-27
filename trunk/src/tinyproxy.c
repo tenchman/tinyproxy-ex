@@ -226,7 +226,7 @@ int main(int argc, char **argv)
     if (godaemon == TRUE)
       openlog("tinyproxy", LOG_PID, LOG_DAEMON);
     else
-      openlog("tinyproxy", LOG_PID, LOG_USER);
+      openlog("tinyproxy", LOG_PID, LOG_LOCAL1);
   }
 
   processed_config_file = TRUE;

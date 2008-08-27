@@ -35,6 +35,7 @@ struct stat_s {
   unsigned long int num_open;
   unsigned long int num_refused;
   unsigned long int num_denied;
+  unsigned long int num_ofcdmatch;
 };
 
 static struct stat_s *stats;
@@ -65,11 +66,13 @@ int showstats(struct conn_s *connptr)
       "Number of requests: %lu<br>\r\n"
       "Number of bad connections: %lu<br>\r\n"
       "Number of denied connections: %lu<br>\r\n"
+      "Number of ofcd matched connections: %lu<br>\r\n"
       "Number of refused connections due to high load: %lu\r\n"
       "</blockquote>\r\n</body></html>\r\n";
 
   char *message_buffer;
-  char opens[16], reqs[16], badconns[16], denied[16], refused[16];
+  char opens[16], reqs[16], badconns[16], denied[16], refused[16],
+      ofcdmatch[16];
   FILE *statfile;
 
   snprintf(opens, sizeof(opens), "%lu", stats->num_open);
@@ -77,6 +80,7 @@ int showstats(struct conn_s *connptr)
   snprintf(badconns, sizeof(badconns), "%lu", stats->num_badcons);
   snprintf(denied, sizeof(denied), "%lu", stats->num_denied);
   snprintf(refused, sizeof(refused), "%lu", stats->num_refused);
+  snprintf(ofcdmatch, sizeof(ofcdmatch), "%lu", stats->num_ofcdmatch);
 
   if (!config.statpage || (!(statfile = fopen(config.statpage, "r")))) {
     message_buffer = safemalloc(MAXBUFFSIZE);
@@ -87,7 +91,8 @@ int showstats(struct conn_s *connptr)
 	     PACKAGE, VERSION, PACKAGE, VERSION,
 	     stats->num_open,
 	     stats->num_reqs,
-	     stats->num_badcons, stats->num_denied, stats->num_refused);
+	     stats->num_badcons, stats->num_denied, stats->num_ofcdmatch,
+	     stats->num_refused);
 
     if (send_http_message(connptr, 200, "OK", message_buffer) < 0) {
       safefree(message_buffer);
@@ -101,8 +106,9 @@ int showstats(struct conn_s *connptr)
   add_error_variable(connptr, "opens", opens);
   add_error_variable(connptr, "reqs", reqs);
   add_error_variable(connptr, "badconns", badconns);
-  add_error_variable(connptr, "denied", denied);
-  add_error_variable(connptr, "refused", refused);
+  add_error_variable(connptr, "deniedconns", denied);
+  add_error_variable(connptr, "ofcdmatch", ofcdmatch);
+  add_error_variable(connptr, "refusedconns", refused);
   add_standard_vars(connptr);
   send_http_headers(connptr, 200, "Statistic requested");
   send_html_file(statfile, connptr);
@@ -132,6 +138,10 @@ int update_stats(status_t update_level)
     ++stats->num_refused;
     break;
   case STAT_DENIED:
+    ++stats->num_denied;
+    break;
+  case STAT_OFCDMATCH:
+    ++stats->num_ofcdmatch;
     ++stats->num_denied;
     break;
   default:
