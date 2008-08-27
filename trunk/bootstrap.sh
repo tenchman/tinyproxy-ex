@@ -1,7 +1,7 @@
 #!/bin/sh
 rm -rf autom4te.cache/
-aclocal
+aclocal --force
 autoheader
-libtoolize
+libtoolize --force
 automake --add-missing
 autoconf
