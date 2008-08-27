@@ -1,6 +1,6 @@
 /* $Id$
  *
- * This is where all the work in tinyproxy is actually done. Incoming
+ * This is where all the work in tinyproxy-ex is actually done. Incoming
  * connections have a new child created for them. The child then
  * processes the headers from the client, the response from the server,
  * and then relays the bytes between the two.
@@ -21,7 +21,7 @@
  * General Public License for more details.
  */
 
-#include "tinyproxy.h"
+#include "tinyproxy-ex.h"
 
 #include "acl.h"
 #include "anonymous.h"
@@ -611,7 +611,7 @@ static struct request_s *process_request(struct conn_s *connptr,
     /*
      * This section of code is used for the transparent proxy
      * option.  You will need to configure your firewall to
-     * redirect all connections for HTTP traffic to tinyproxy
+     * redirect all connections for HTTP traffic to tinyproxy-ex
      * for this to work properly.
      *
      * This code was written by Petr Lampa <lampa@fit.vutbr.cz>
@@ -788,7 +788,7 @@ static int pull_client_data(struct conn_s *connptr, long int length)
   /*
    * BUG FIX: Internet Explorer will leave two bytes (carriage
    * return and line feed) at the end of a POST message.  These
-   * need to be eaten for tinyproxy to work correctly.
+   * need to be eaten for tinyproxy-ex to work correctly.
    */
   socket_nonblocking(connptr->client_fd);
   len = recv(connptr->client_fd, buffer, 2, MSG_PEEK);
@@ -814,7 +814,7 @@ ERROR_EXIT:
  * the server.
  *	-rjkaes
  */
-static int add_xtinyproxy_header(struct conn_s *connptr)
+static int add_xtinyproxy_ex_header(struct conn_s *connptr)
 {
   /*
    * Don't try to send if we have an invalid server handle.
@@ -1124,7 +1124,7 @@ process_client_headers(struct conn_s *connptr, hashmap_t hashofheaders)
   }
 #if defined(XTINYPROXY_ENABLE)
   if (config.my_domain)
-    add_xtinyproxy_header(connptr);
+    add_xtinyproxy_ex_header(connptr);
 #endif
 
   if (connptr->upstream_proxy && connptr->upstream_proxy->authentication)
@@ -1272,7 +1272,7 @@ ERROR_EXIT:
  * between the two connections. We continue to use the buffering code
  * since we want to be able to buffer a certain amount for slower
  * connections (as this was the reason why I originally modified
- * tinyproxy oh so long ago...)
+ * tinyproxy-ex oh so long ago...)
  *	- rjkaes
  */
 static void relay_connection(struct conn_s *connptr)
@@ -1405,7 +1405,7 @@ connect_to_upstream(struct conn_s *connptr, struct request_s *request)
 #ifndef UPSTREAM_SUPPORT
   /*
    * This function does nothing if upstream support was not compiled
-   * into tinyproxy.
+   * into tinyproxy-ex.
    */
   return -1;
 #else
@@ -1476,10 +1476,10 @@ connect_to_upstream(struct conn_s *connptr, struct request_s *request)
 /*
  * This is the main drive for each connection. As you can tell, for the
  * first few steps we are using a blocking socket. If you remember the
- * older tinyproxy code, this use to be a very confusing state machine.
+ * older tinyproxy-ex code, this use to be a very confusing state machine.
  * Well, no more! :) The sockets are only switched into nonblocking mode
  * when we start the relay portion. This makes most of the original
- * tinyproxy code, which was confusing, redundant. Hail progress.
+ * tinyproxy-ex code, which was confusing, redundant. Hail progress.
  * 	- rjkaes
  */
 void handle_connection(int fd)

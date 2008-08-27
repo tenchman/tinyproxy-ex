@@ -1,8 +1,8 @@
 /* $Id$
  *
- * This module handles the statistics for tinyproxy. There are only two
+ * This module handles the statistics for tinyproxy-ex. There are only two
  * public API functions. The reason for the functions, rather than just a
- * external structure is that tinyproxy is now multi-threaded and we can
+ * external structure is that tinyproxy-ex is now multi-threaded and we can
  * not allow more than one child to access the statistics at the same
  * time. This is prevented by a mutex. If there is a need for more
  * statistics in the future, just add to the structure, enum (in the header),
@@ -21,7 +21,7 @@
  * General Public License for more details.
  */
 
-#include "tinyproxy.h"
+#include "tinyproxy-ex.h"
 
 #include "log.h"
 #include "heap.h"
@@ -53,7 +53,7 @@ void init_stats(void)
 }
 
 /*
- * Display the statics of the tinyproxy server.
+ * Display the statics of the tinyproxy-ex server.
  */
 int showstats(struct conn_s *connptr)
 {

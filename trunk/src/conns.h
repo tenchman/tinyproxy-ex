@@ -18,7 +18,7 @@
 #ifndef TINYPROXY_CONNS_H
 #define TINYPROXY_CONNS_H
 
-#include "tinyproxy.h"
+#include "tinyproxy-ex.h"
 
 /*
  * Connection Definition

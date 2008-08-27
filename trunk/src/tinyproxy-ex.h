@@ -1,6 +1,6 @@
 /* $Id$
  *
- * See 'tinyproxy.c' for a detailed description.
+ * See 'tinyproxy-ex.c' for a detailed description.
  *
  * Copyright (C) 1998  Steven Young
  * Copyright (C) 1999  Robert James Kaes (rjkaes@flarenet.com)
@@ -26,9 +26,9 @@
 #define MAX_IDLE_TIME 	(60 * 10)	/* 10 minutes of no activity */
 
 /* Name to serve local request on */
-#define INTERNALNAME  "tinyproxy.intern"
+#define INTERNALNAME  "tinyproxy-ex.intern"
 /*
- * Even if upstream support is not compiled into tinyproxy, this
+ * Even if upstream support is not compiled into tinyproxy-ex, this
  * structure still needs to be defined.
  */
 
@@ -91,7 +91,7 @@ struct config_s {
   /* 
    * Error page support.  This is an array of pointers to structures
    * which describe the error page path, and what HTTP error it handles.
-   * an example would be { "/usr/local/etc/tinyproxy/404.html", 404 }
+   * an example would be { "/usr/local/etc/tinyproxy-ex/404.html", 404 }
    * Ending of array is noted with NULL, 0.
    */
   struct error_pages_s {

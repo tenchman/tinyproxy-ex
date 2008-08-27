@@ -22,7 +22,7 @@
  * General Public License for more details.
  */
 
-#include "tinyproxy.h"
+#include "tinyproxy-ex.h"
 
 #include "anonymous.h"
 #include "buffer.h"
@@ -124,7 +124,7 @@ Options:\n\
   -l            Display the license.\n\
   -v            Display the version number.\n");
 
-  /* Display the modes compiled into tinyproxy */
+  /* Display the modes compiled into tinyproxy-ex */
   printf("\nFeatures Compiled In:\n");
 #ifdef XTINYPROXY_ENABLE
   printf("    XTinyproxy Header\n");
@@ -224,9 +224,9 @@ int main(int argc, char **argv)
     }
   } else {
     if (godaemon == TRUE)
-      openlog("tinyproxy", LOG_PID, LOG_DAEMON);
+      openlog("tinyproxy-ex", LOG_PID, LOG_DAEMON);
     else
-      openlog("tinyproxy", LOG_PID, LOG_LOCAL1);
+      openlog("tinyproxy-ex", LOG_PID, LOG_LOCAL1);
   }
 
   processed_config_file = TRUE;

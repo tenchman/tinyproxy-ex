@@ -1,6 +1,6 @@
 /* $Id$
  *
- * Logs the various messages which tinyproxy produces to either a log file or
+ * Logs the various messages which tinyproxy-ex produces to either a log file or
  * the syslog daemon. Not much to it...
  *
  * Copyright (C) 1998  Steven Young
@@ -17,7 +17,7 @@
  * General Public License for more details.
  */
 
-#include "tinyproxy.h"
+#include "tinyproxy-ex.h"
 
 #include "heap.h"
 #include "log.h"

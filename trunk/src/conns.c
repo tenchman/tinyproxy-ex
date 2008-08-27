@@ -18,7 +18,7 @@
  * General Public License for more details.
  */
 
-#include "tinyproxy.h"
+#include "tinyproxy-ex.h"
 
 #include "buffer.h"
 #include "conns.h"

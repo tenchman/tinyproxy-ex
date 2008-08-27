@@ -19,7 +19,7 @@
  * General Public License for more details.
  */
 
-#include "tinyproxy.h"
+#include "tinyproxy-ex.h"
 #include "heap.h"
 #include "text.h"
 
@@ -101,7 +101,7 @@ void *malloc_shared_memory(size_t size)
   void *ptr;
   char buffer[32];
 
-  static char *shared_file = "/tmp/tinyproxy.shared.XXXXXX";
+  static char *shared_file = "/tmp/tinyproxy-ex.shared.XXXXXX";
 
   assert(size > 0);
 

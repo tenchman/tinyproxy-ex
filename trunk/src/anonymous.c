@@ -16,7 +16,7 @@
  * General Public License for more details.
  */
 
-#include "tinyproxy.h"
+#include "tinyproxy-ex.h"
 
 #include "anonymous.h"
 #include "hashmap.h"

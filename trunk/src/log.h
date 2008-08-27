@@ -27,7 +27,7 @@
  * Okay, I have modelled the levels for logging off the syslog() interface.
  * However, I would really prefer if only five of the levels are used. You
  * can see them below and I'll describe what each level should be for.
- * Hopefully tinyproxy will remain consistent with these levels.
+ * Hopefully tinyproxy-ex will remain consistent with these levels.
  *	-- rjkaes
  * Sorry but I had to destroy the hope ;-) There was a need to log 
  * connections without the INFO stuff and not to have them as NOTICE.
@@ -35,7 +35,7 @@
  *
  * Level	Description
  * -----	-----------
- * LOG_CRIT	This is catastrophic. Basically, tinyproxy can not recover
+ * LOG_CRIT	This is catastrophic. Basically, tinyproxy-ex can not recover
  *		from this and will either close the child (if we're lucky),
  *		or the entire daemon. I would relegate this to conditions
  *		like unable to create the listening socket, or unable to
@@ -49,8 +49,8 @@
  *		to bring the whole daemon down.
  *
  * LOG_WARNING	There is condition which will change the behaviour of
- *		tinyproxy from what is expected. For example, somebody did
- *		not specify a port. tinyproxy will handle this (by using
+ *		tinyproxy-ex from what is expected. For example, somebody did
+ *		not specify a port. tinyproxy-ex will handle this (by using
  *		it's default port), but it's a _higher_ level situation
  *		which the admin should be aware of.
  *

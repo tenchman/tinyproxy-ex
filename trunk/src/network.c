@@ -19,7 +19,7 @@
  * General Public License for more details.
  */
 
-#include "tinyproxy.h"
+#include "tinyproxy-ex.h"
 
 #include "heap.h"
 #include "network.h"

@@ -13,7 +13,7 @@
  * General Public License for more details.
  */
 
-#include "tinyproxy.h"
+#include "tinyproxy-ex.h"
 #ifdef FTP_SUPPORT
 #include "reqs.h"
 #include "conns.h"
@@ -25,7 +25,7 @@
 #define slash (info->type == 'd' ? "/" : "")
 
 #define FTP_HEAD "<html><head>" \
-  "<link rel='stylesheet' type='text/css' href='http:/""/" INTERNALNAME "/tinyproxy.css'>" \
+  "<link rel='stylesheet' type='text/css' href='http:/""/" INTERNALNAME "/tinyproxy-ex.css'>" \
   "</head><body class='dirlist'><pre>"
 
 struct ftpinfo_s {
@@ -403,7 +403,7 @@ static ssize_t fmt_direntry(char *buf, size_t buflen, struct ftpinfo_s *info)
   char displayname[36];
   char *safename = urlencode(info->name);
   const char outfmt[] =
-      "<a href=\"%s%s%s\"><img border=\"0\" src=\"http://tinyproxy.intern/%c.png\" alt=\"[%c]\">"
+      "<a href=\"%s%s%s\"><img border=\"0\" src=\"http://tinyproxy-ex.intern/%c.png\" alt=\"[%c]\">"
       "</a> <a href=\"%s%s%s\">%s</a>%.*s %s %15llu   %s\r\n";
 
   /* crop the displayed name */
@@ -442,7 +442,7 @@ ssize_t add_ftpdir_header(struct conn_s * connptr)
 
   if (strcmp(connptr->ftp_path, "/"))
     len += snprintf(buf + len, sizeof(buf) - len, "<a href='..'>"
-		    "<img border='0' src='http://tinyproxy.intern/u.png' alt='up'>"
+		    "<img border='0' src='http://tinyproxy-ex.intern/u.png' alt='up'>"
 		    "</a> <a href='..'>Parent Directory</a>\r\n");
 
   return add_to_buffer(connptr->sbuffer, buf, len);

@@ -1,9 +1,9 @@
 /* $Id$
  *
- * This file groups all the headers required throughout the tinyproxy
- * system.  All this information use to be in the "tinyproxy.h" header,
+ * This file groups all the headers required throughout the tinyproxy-ex
+ * system.  All this information use to be in the "tinyproxy-ex.h" header,
  * but various other "libraries" in the program need the same information,
- * without the tinyproxy specific defines.
+ * without the tinyproxy-ex specific defines.
  *
  * Copyright (C) 2002  Robert James Kaes (rjkaes@flarenet.com)
  *
@@ -26,7 +26,7 @@
 #endif
 
 /*
- * Include standard headers which are used through-out tinyproxy
+ * Include standard headers which are used through-out tinyproxy-ex
  */
 #ifdef HAVE_SYS_TYPES_H
 #  include      <sys/types.h>

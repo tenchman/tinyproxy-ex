@@ -16,7 +16,7 @@
  * General Public License for more details.
  */
 
-#include "tinyproxy.h"
+#include "tinyproxy-ex.h"
 
 #include "child.h"
 #include "daemon.h"
@@ -70,7 +70,7 @@ static int lock_fd = -1;
 
 static void _child_lock_init(void)
 {
-  char lock_file[] = "/tmp/tinyproxy.servers.lock.XXXXXX";
+  char lock_file[] = "/tmp/tinyproxy-ex.servers.lock.XXXXXX";
 
   lock_fd = mkstemp(lock_file);
   unlink(lock_file);
