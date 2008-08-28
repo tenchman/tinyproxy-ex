@@ -49,9 +49,13 @@ static int parsepasv(char *buf, char *host)
    */
   char *tmp = strchr(buf, '(');
   int h1, h2, h3, h4, p1, p2, port;
+
+  if (!tmp)
+    tmp = strchr(buf, '=');	/* EPLF */
+
   if (!tmp) {
     /* err */
-  } else if (sscanf(tmp, "(%u,%u,%u,%u,%u,%u)",
+  } else if (sscanf(++tmp, "%u,%u,%u,%u,%u,%u",
 		    &h1, &h2, &h3, &h4, &p1, &p2) != 6) {
     /* err */
   } else if ((port = p1 * 256 + p2) > 65535 || port < 0) {
