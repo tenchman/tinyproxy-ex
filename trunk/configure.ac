@@ -1,4 +1,4 @@
-dnl $Id: configure.ac,v 2.60.2.3 2004/08/09 18:48:48 rjkaes Exp $
+dnl $Id$
 
 dnl Devlopers, please strive to achieve this order:
 dnl

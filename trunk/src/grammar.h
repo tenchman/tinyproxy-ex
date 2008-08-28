@@ -38,60 +38,60 @@
 # define YYTOKENTYPE
    /* Put the tokens into the symbol table, so that GDB and other debuggers
       know about them.  */
-   enum yytokentype {
-     KW_PORT = 258,
-     KW_LISTEN = 259,
-     KW_LOGFILE = 260,
-     KW_PIDFILE = 261,
-     KW_SYSLOG = 262,
-     KW_MAXCLIENTS = 263,
-     KW_MAXSPARESERVERS = 264,
-     KW_MINSPARESERVERS = 265,
-     KW_STARTSERVERS = 266,
-     KW_MAXREQUESTSPERCHILD = 267,
-     KW_TIMEOUT = 268,
-     KW_USER = 269,
-     KW_GROUP = 270,
-     KW_ANONYMOUS = 271,
-     KW_XTINYPROXY = 272,
-     KW_FILTER = 273,
-     KW_FILTERURLS = 274,
-     KW_FILTEREXTENDED = 275,
-     KW_FILTER_DENY = 276,
-     KW_FILTER_CASESENSITIVE = 277,
-     KW_UPSTREAM = 278,
-     KW_CONNECTPORT = 279,
-     KW_BIND = 280,
-     KW_STATHOST = 281,
-     KW_ERRORPAGE = 282,
-     KW_DEFAULT_ERRORPAGE = 283,
-     KW_STATPAGE = 284,
-     KW_VIA_PROXY_NAME = 285,
-     KW_ACL = 286,
-     KW_OFCD_SOCKET = 287,
-     KW_OFCD_CATEGORIES = 288,
-     KW_AUTHENTICATION = 289,
-     KW_YES = 290,
-     KW_NO = 291,
-     KW_OFCD = 292,
-     KW_ALLOW = 293,
-     KW_DENY = 294,
-     KW_SRC = 295,
-     KW_DST = 296,
-     KW_LOGLEVEL = 297,
-     KW_LOG_CRITICAL = 298,
-     KW_LOG_ERROR = 299,
-     KW_LOG_WARNING = 300,
-     KW_LOG_NOTICE = 301,
-     KW_LOG_CONNECT = 302,
-     KW_LOG_INFO = 303,
-     IDENTIFIER = 304,
-     NUMBER = 305,
-     STRING = 306,
-     NUMERIC_ADDRESS = 307,
-     NETMASK_ADDRESS = 308,
-     NETWORK_ADDRESSRANGE = 309
-   };
+enum yytokentype {
+  KW_PORT = 258,
+  KW_LISTEN = 259,
+  KW_LOGFILE = 260,
+  KW_PIDFILE = 261,
+  KW_SYSLOG = 262,
+  KW_MAXCLIENTS = 263,
+  KW_MAXSPARESERVERS = 264,
+  KW_MINSPARESERVERS = 265,
+  KW_STARTSERVERS = 266,
+  KW_MAXREQUESTSPERCHILD = 267,
+  KW_TIMEOUT = 268,
+  KW_USER = 269,
+  KW_GROUP = 270,
+  KW_ANONYMOUS = 271,
+  KW_XTINYPROXY = 272,
+  KW_FILTER = 273,
+  KW_FILTERURLS = 274,
+  KW_FILTEREXTENDED = 275,
+  KW_FILTER_DENY = 276,
+  KW_FILTER_CASESENSITIVE = 277,
+  KW_UPSTREAM = 278,
+  KW_CONNECTPORT = 279,
+  KW_BIND = 280,
+  KW_STATHOST = 281,
+  KW_ERRORPAGE = 282,
+  KW_DEFAULT_ERRORPAGE = 283,
+  KW_STATPAGE = 284,
+  KW_VIA_PROXY_NAME = 285,
+  KW_ACL = 286,
+  KW_OFCD_SOCKET = 287,
+  KW_OFCD_CATEGORIES = 288,
+  KW_AUTHENTICATION = 289,
+  KW_YES = 290,
+  KW_NO = 291,
+  KW_OFCD = 292,
+  KW_ALLOW = 293,
+  KW_DENY = 294,
+  KW_SRC = 295,
+  KW_DST = 296,
+  KW_LOGLEVEL = 297,
+  KW_LOG_CRITICAL = 298,
+  KW_LOG_ERROR = 299,
+  KW_LOG_WARNING = 300,
+  KW_LOG_NOTICE = 301,
+  KW_LOG_CONNECT = 302,
+  KW_LOG_INFO = 303,
+  IDENTIFIER = 304,
+  NUMBER = 305,
+  STRING = 306,
+  NUMERIC_ADDRESS = 307,
+  NETMASK_ADDRESS = 308,
+  NETWORK_ADDRESSRANGE = 309
+};
 #endif
 /* Tokens.  */
 #define KW_PORT 258
@@ -154,16 +154,15 @@
 typedef union YYSTYPE
 #line 37 "grammar.y"
 {
-	unsigned int num;
-	char *cptr;
+  unsigned int num;
+  char *cptr;
 }
 /* Line 1489 of yacc.c.  */
 #line 162 "grammar.h"
-	YYSTYPE;
-# define yystype YYSTYPE /* obsolescent; will be withdrawn */
+YYSTYPE;
+# define yystype YYSTYPE	/* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
 # define YYSTYPE_IS_TRIVIAL 1
 #endif
 
 extern YYSTYPE yylval;
-

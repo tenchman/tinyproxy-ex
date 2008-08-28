@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.17 2003/06/26 18:23:01 rjkaes Exp $
+# $Id$
 #
 # Copyright (C) 2000  Robert James Kaes (rjkaes@flarenet.com)
 #
@@ -57,3 +57,5 @@ indent:
 clean:
 	rm -f *.da
 	rm -f gmon.out
+	rm -f *.o
+	rm -f tinyproxy
