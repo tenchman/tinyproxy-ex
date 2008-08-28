@@ -73,7 +73,7 @@ int serve_local_file(struct conn_s *connptr, const char *filename)
     return -1;
   }
 
-  if (snprintf(path, PATH_MAX, "/usr/share/tinyproxy-ex/%s", filename) >= PATH_MAX) {
+  if (snprintf(path, PATH_MAX, DATAROOTDIR "/%s", filename) >= PATH_MAX) {
     send_http_message(connptr, 414, "Request-URI Too Long",
 		      "Request-URI Too Long!");
     return -1;
