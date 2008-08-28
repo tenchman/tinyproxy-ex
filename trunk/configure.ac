@@ -14,7 +14,7 @@ dnl 8. System services
 dnl
 dnl Read the Autoconf manual for details.
 
-AC_INIT([tinyproxy], [1.6.3], [rjkaes@users.sourceforge.net])
+AC_INIT([tinyproxy-ex], [1.6.4], [gernot@tenchio.de])
 AC_CONFIG_SRCDIR([src/tinyproxy.c])
 AC_PREREQ(2.52)
 
@@ -22,7 +22,7 @@ AC_CONFIG_MACRO_DIR([m4])
 AC_CANONICAL_TARGET
 
 AH_TEMPLATE([TARGET_SYSTEM],
-	    [A string containing the target system for which tinyproxy was built.])
+	    [A string containing the target system for which tinyproxy-ex was built.])
 AC_DEFINE_UNQUOTED(TARGET_SYSTEM, ["$target"])
 
 AM_INIT_AUTOMAKE($PACKAGE_NAME, $PACKAGE_VERSION)
@@ -37,13 +37,13 @@ dnl
 dnl Command line options
 dnl
 
-dnl Set the URL name for find the statistics of tinyproxy
+dnl Set the URL name for find the statistics of tinyproxy-ex
 AH_TEMPLATE([DEFAULT_STATHOST],
 	[This controls remote proxy stats display.])
 AC_ARG_WITH(stathost,
             [AC_HELP_STRING([--with-stathost=HOST], [Default status host])],
             [AC_DEFINE_UNQUOTED(DEFAULT_STATHOST, "$withval")],
-	    [AC_DEFINE_UNQUOTED(DEFAULT_STATHOST, "tinyproxy.stats")])
+	    [AC_DEFINE_UNQUOTED(DEFAULT_STATHOST, "tinyproxy-ex.stats")])
 
 dnl Set the default configuration file location
 test "$prefix" = "NONE" && prefix=/usr/local
@@ -63,14 +63,17 @@ if [[ `echo $tp_config_file | cut -c1` = "/" ]]; then
 else
 	# If sysconfdir is /usr/etc, change it to /etc (since /usr/etc doesn't exist)
 	if [[ "/usr/etc" = `eval echo $sysconfdir` -a "/usr" = "$prefix" ]]; then
-		TINYPROXY_CONFIG_DIR="/etc/tinyproxy"
+		TINYPROXY_CONFIG_DIR="/etc/tinyproxy-ex"
 	else
-		TINYPROXY_CONFIG_DIR=`eval echo $sysconfdir/tinyproxy`
+		TINYPROXY_CONFIG_DIR=`eval echo $sysconfdir/tinyproxy-ex`
 	fi
         TINYPROXY_CONFIG_FILE="$tp_config_file"
 fi
 
 AC_DEFINE_UNQUOTED(DEFAULT_CONF_FILE, "$TINYPROXY_CONFIG_DIR/$TINYPROXY_CONFIG_FILE")
+AH_TEMPLATE([DATAROOTDIR],
+	[The location for errorpages, styles and similar datafiles.])
+AC_DEFINE_UNQUOTED(DATAROOTDIR, "`eval echo $datarootdir/tinyproxy-ex`")
 
 AC_MSG_NOTICE([Default config location and file is: $TINYPROXY_CONFIG_DIR/$TINYPROXY_CONFIG_FILE])
 
@@ -141,7 +144,7 @@ fi
 
 dnl Include the transparent proxy support
 AH_TEMPLATE([TRANSPARENT_PROXY],
-	    [Include support for using tinyproxy as a transparent proxy.])
+	    [Include support for using tinyproxy-ex as a transparent proxy.])
 AC_ARG_ENABLE(transparent-proxy,
 	      [AC_HELP_STRING([--enable-transparent-proxy],
                               [Enable transparent proxy support (default is NO)])],
@@ -150,10 +153,10 @@ if test x"$transparent_enabled" = x"yes"; then
    AC_DEFINE(TRANSPARENT_PROXY)
 fi
 
-dnl Include support for a statically compiled tinyproxy
+dnl Include support for a statically compiled tinyproxy-ex
 AC_ARG_ENABLE(static,
               [AC_HELP_STRING([--enable-static],
-                              [Statically link tinyproxy (default is NO)])],
+                              [Statically link tinyproxy-ex (default is NO)])],
 	      [LDFLAGS="-static $LDFLAGS"])
 
 
