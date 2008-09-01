@@ -112,13 +112,13 @@ int send_html_file(FILE * infile, struct conn_s *connptr)
 	  *p = '\0';
 	  if ((varval = lookup_variable(connptr, varstart))) {
 	    writeret = write_message(connptr->client_fd, "%s", varval);
-	    if (writeret)
+	    if (writeret < 0)
 	      return (writeret);
 	  }
 	  in_variable = 0;
 	} else {
 	  writeret = write_message(connptr->client_fd, "%c", *p);
-	  if (writeret)
+	  if (writeret < 0)
 	    return (writeret);
 	}
 	break;
@@ -137,7 +137,7 @@ int send_html_file(FILE * infile, struct conn_s *connptr)
       default:
 	if (!in_variable) {
 	  writeret = write_message(connptr->client_fd, "%c", *p);
-	  if (writeret)
+	  if (writeret < 0)
 	    return (writeret);
 	}
 
@@ -176,17 +176,21 @@ int send_http_error_message(struct conn_s *connptr)
       "with the error code %d (%s).  Please contact your administrator."
       "<center>%s</center>" "</body></html>" "\r\n";
 
-  send_http_headers(connptr, connptr->error_number, connptr->error_string);
+  ret =
+      send_http_headers(connptr, connptr->error_number, connptr->error_string);
 
-  error_file = get_html_file(connptr->error_number);
-  if (!(infile = fopen(error_file, "r")))
-    return (write_message(connptr->client_fd, fallback_error,
+  if (ret != -1) {
+    error_file = get_html_file(connptr->error_number);
+    if (!(infile = fopen(error_file, "r"))) {
+      ret = write_message(connptr->client_fd, fallback_error,
 			  connptr->error_string,
 			  PACKAGE, VERSION,
-			  errno, strerror(errno), connptr->error_string));
-
-  ret = send_html_file(infile, connptr);
-  fclose(infile);
+			  errno, strerror(errno), connptr->error_string);
+    } else {
+      ret = send_html_file(infile, connptr);
+      fclose(infile);
+    }
+  }
   return (ret);
 }
 

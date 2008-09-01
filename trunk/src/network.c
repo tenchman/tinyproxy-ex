@@ -79,6 +79,8 @@ ssize_t safe_read(int fd, char *buffer, size_t count)
  * differences between the various implementations of vsnprintf. This code
  * was basically stolen from the snprintf() man page of Debian Linux
  * (although I did fix a memory leak. :)
+ *
+ * Return the bytes written to the file descriptor or -1 in case of an error.
  */
 int write_message(int fd, const char *fmt, ...)
 {
@@ -114,13 +116,9 @@ int write_message(int fd, const char *fmt, ...)
       buf = tmpbuf;
   }
 
-  if (safe_write(fd, buf, n) < 0) {
-    safefree(buf);
-    return -1;
-  }
-
+  n = safe_write(fd, buf, n);
   safefree(buf);
-  return 0;
+  return n;
 }
 
 /*
