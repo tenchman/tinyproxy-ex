@@ -451,9 +451,9 @@ static struct upstream *upstream_get(char *host)
     up = NULL;
 
   if (up)
-    log_message(LOG_INFO, "Found proxy %s:%d for %s", up->host, up->port, host);
+    DEBUG2("Found proxy %s:%d for %s", up->host, up->port, host);
   else
-    log_message(LOG_INFO, "No proxy for %s", host);
+    DEBUG2("No proxy for %s", host);
 
   return up;
 }
