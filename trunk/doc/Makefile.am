@@ -1,5 +1,5 @@
 # HTML Variable Substitution Files
-HTML_VAR_SUBST = HTML_VARIABLES debug.html default.html stats.html
+HTML_VAR_SUBST = HTML_VARIABLES debug.html default.html stats.html 403.html
 man_MANS = tinyproxy.8
 
 EXTRA_DIST = $(man_MANS) tinyproxy.conf \
@@ -7,7 +7,8 @@ EXTRA_DIST = $(man_MANS) tinyproxy.conf \
 	releases.txt \
 	filter-howto.txt \
 	report.sh.tmpl \
-	$(HTML_VAR_SUBST)
+	$(HTML_VAR_SUBST) \
+	icons/*.png
 
 install-exec-local: report.sh
 

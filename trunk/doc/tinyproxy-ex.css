@@ -1,0 +1,27 @@
+html { background: #f0f0e0; }
+h1 { margin: 0em 0em .6em 0em; font-size: 160%; }
+div.messagebody {
+  background: #fff;
+  min-width: 13em;
+  max-width: 48em;
+  margin: 4em auto;
+  border: 1px solid #999;
+  -moz-border-radius: 10px;
+  padding: 3em 2em 3em 7em;
+}
+body.dirlist {
+  background: #fff;
+  margin: 2em;
+  border: 1px solid #999;
+  -moz-border-radius: 10px;
+  padding: 2em;
+}
+
+a { color: #a04020; text-decoration:none; }
+a:hover, a:focus { text-decoration:underline; }
+a:visited { color: #a020a0; }
+
+div.info { background: url("information.png") 1.5em 1.5em no-repeat #FFF; }
+div.error { background: url("error.png") 1.5em 2em no-repeat #FFF; }
+input.back { float: right; padding: 0 2em; }
+pre img { vertical-align: middle; }

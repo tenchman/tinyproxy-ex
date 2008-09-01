@@ -39,11 +39,16 @@ tinyproxy-configure-file:
 
 # Install the HTML files
 tinyproxy-html-files:
-	$(mkinstalldirs) $(DESTDIR)$(datadir)/tinyproxy
+	$(mkinstalldirs) $(DESTDIR)$(datadir)/@PACKAGE@
 
-	for file in debug default stats; do \
-	  $(INSTALL) -m 644 $(srcdir)/doc/$$file.html $(DESTDIR)$(datadir)/tinyproxy/$$file.html.dist ; \
-	  test -f $(DESTDIR)$(datadir)/tinyproxy/$$file.html || \
-	    $(INSTALL) -m 644 $(srcdir)/doc/$$file.html $(DESTDIR)$(datadir)/tinyproxy/$$file.html ; \
+	for file in debug default stats 403; do \
+	  $(INSTALL) -m 644 $(srcdir)/doc/$$file.html $(DESTDIR)$(datadir)/@PACKAGE@/$$file.html.dist ; \
+	  test -f $(DESTDIR)$(datadir)/@PACKAGE@/$$file.html || \
+	    $(INSTALL) -m 644 $(srcdir)/doc/$$file.html $(DESTDIR)$(datadir)/@PACKAGE@/$$file.html ; \
 	done
-	$(INSTALL) -m 644 $(srcdir)/doc/HTML_VARIABLES $(DESTDIR)$(datadir)/tinyproxy/HTML_VARIABLES
+	for file in $(srcdir)/doc/icons/*.png; do \
+	  $(INSTALL) -m 644 $$file $(DESTDIR)$(datadir)/@PACKAGE@/ ; \
+	done
+	$(INSTALL) -m 644 $(srcdir)/doc/HTML_VARIABLES $(DESTDIR)$(datadir)/@PACKAGE@/HTML_VARIABLES
+	$(INSTALL) -m 644 $(srcdir)/doc/tinyproxy-ex.css $(DESTDIR)$(datadir)/@PACKAGE@/tinyproxy-ex.css
+
