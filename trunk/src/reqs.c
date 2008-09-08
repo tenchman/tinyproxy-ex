@@ -690,13 +690,13 @@ static struct request_s *process_request(struct conn_s *connptr,
    */
 
   if (config.stathost && strcmp(config.stathost, request->host) == 0) {
-    log_message(LOG_NOTICE, "Request for the stathost.");
+    log_message(LOG_DEBUG, "Request for the stathost.");
     connptr->show_stats = TRUE;
     safefree(url);
     free_request_struct(request);
     return NULL;
   } else if (strcmp(INTERNALNAME, request->host) == 0) {
-    log_message(LOG_NOTICE, "Request for a local file.");
+    log_message(LOG_DEBUG, "Request for a local file.");
     connptr->local_request = TRUE;
   }
 #ifdef FILTER_ENABLE
@@ -1484,6 +1484,7 @@ connect_to_upstream(struct conn_s *connptr, struct request_s *request)
  */
 void handle_connection(int fd)
 {
+  struct timeval tv_s, tv_e;
   struct conn_s *connptr;
   struct request_s *request = NULL;
   hashmap_t hashofheaders = NULL;
@@ -1491,7 +1492,9 @@ void handle_connection(int fd)
   char peer_ipaddr[PEER_IP_LENGTH];
   char peer_string[PEER_STRING_LENGTH];
   char errbuf[4096];
-  char *aclname;
+  char *aclname, *tmp;
+
+  gettimeofday(&tv_s, NULL);
 
   getpeer_information(fd, peer_ipaddr, peer_string);
 
@@ -1511,8 +1514,7 @@ void handle_connection(int fd)
 			"The administrator of this proxy has not configured it to service requests from your host.",
 			NULL);
     send_http_error_message(connptr);
-    destroy_conn(connptr);
-    return;
+    goto COMMON_EXIT;
   }
 
   connptr->aclname = aclname;
@@ -1524,8 +1526,7 @@ void handle_connection(int fd)
 			"Server timeout waiting for the HTTP request from the client.",
 			NULL);
     send_http_error_message(connptr);
-    destroy_conn(connptr);
-    return;
+    goto COMMON_EXIT;
   }
 
   /*
@@ -1538,8 +1539,7 @@ void handle_connection(int fd)
 			"An internal server error occurred while processing your request.  Please contact the administrator.",
 			NULL);
     send_http_error_message(connptr);
-    destroy_conn(connptr);
-    return;
+    goto COMMON_EXIT;
   }
 
   /*
@@ -1548,19 +1548,15 @@ void handle_connection(int fd)
   if (get_all_headers(connptr->client_fd, hashofheaders) < 0) {
     log_message(LOG_WARNING,
 		"Could not retrieve all the headers from the client");
-    hashmap_delete(hashofheaders);
     update_stats(STAT_BADCONN);
-    destroy_conn(connptr);
-    return;
+    goto COMMON_EXIT;
   }
 
   request = process_request(connptr, hashofheaders);
   if (!request) {
     if (!connptr->error_variables && !connptr->show_stats) {
       update_stats(STAT_BADCONN);
-      destroy_conn(connptr);
-      hashmap_delete(hashofheaders);
-      return;
+      goto COMMON_EXIT;
     }
     goto send_error;
   }
@@ -1613,11 +1609,8 @@ send_error:
 
   if (process_client_headers(connptr, hashofheaders) < 0) {
     update_stats(STAT_BADCONN);
-    if (!connptr->error_variables) {
-      hashmap_delete(hashofheaders);
-      destroy_conn(connptr);
-      return;
-    }
+    if (!connptr->error_variables)
+      goto COMMON_EXIT;
   }
 
   if (connptr->error_variables) {
@@ -1647,7 +1640,7 @@ send_error:
 
   relay_connection(connptr);
 
-  log_message(LOG_INFO,
+  log_message(LOG_CONN,
 	      "Closed connection between local client (fd:%d) and remote client (fd:%d)",
 	      connptr->client_fd, connptr->server_fd);
 
@@ -1655,7 +1648,31 @@ send_error:
    * All done... close everything and go home... :)
    */
 COMMON_EXIT:
-  hashmap_delete(hashofheaders);
+
+  gettimeofday(&tv_e, NULL);
+
+  tv_e.tv_sec -= tv_s.tv_sec;
+  tv_e.tv_usec -= tv_s.tv_usec;
+  if (tv_e.tv_usec < 0) {
+    tv_e.tv_usec += 1000000;
+    tv_e.tv_sec--;
+  }
+  tv_e.tv_usec /= 1000;
+
+  if ((tmp = strchr(connptr->request_line, '?')))
+    *++tmp = '\0';
+
+  /* sort of apache/squid style logline */
+  log_message(LOG_NOTICE, "%s %s %d %d.%03d",
+	      peer_ipaddr,
+	      connptr->request_line,
+	      connptr->error_number != -1 ? connptr->error_number : 200,
+	      tv_e.tv_sec, tv_e.tv_usec);
+
+
+  if (hashofheaders)
+    hashmap_delete(hashofheaders);
+
   destroy_conn(connptr);
   return;
 }

@@ -289,7 +289,7 @@ find_extacl(int fd, const char *ip_address, const char *string_address,
   }
 
   if (aclptr) {
-    log_message(LOG_NOTICE, "%s: found acl \"%s:%s\" for connection from %s",
+    log_message(LOG_INFO, "%s: found acl \"%s:%s\" for connection from %s",
 		__func__, aclptr->aclname, aclptr->location, ip_address);
     *aclname = safestrdup(aclptr->aclname);
     return FILTER_ALLOW;
