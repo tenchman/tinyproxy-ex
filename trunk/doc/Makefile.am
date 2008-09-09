@@ -1,5 +1,5 @@
 # HTML Variable Substitution Files
-HTML_VAR_SUBST = HTML_VARIABLES debug.html default.html stats.html 403.html
+HTML_VAR_SUBST = HTML_VARIABLES debug.html default.html stats.html 403.html tinyproxy-ex.css
 man_MANS = tinyproxy.8
 
 EXTRA_DIST = $(man_MANS) tinyproxy.conf \
