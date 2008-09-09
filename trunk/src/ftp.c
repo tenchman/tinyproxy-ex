@@ -412,6 +412,7 @@ static ssize_t fmt_direntry(char *buf, size_t buflen, struct ftpinfo_s *info)
 
   /* crop the displayed name */
   strncpy(displayname, info->name, 31);
+  displayname[31] = '\0';
   if (nlen <= 0) {
     memcpy(&displayname[30], "&gt;", 5);
     nlen = 0;
