@@ -1629,6 +1629,15 @@ send_error:
       update_stats(STAT_BADCONN);
       goto COMMON_EXIT;
     }
+#ifdef FTP_SUPPORT
+  } else if (connptr->method == METH_FTP) {
+    if (send_ftp_response(connptr) < 0) {
+      log_message(LOG_ERR,
+		  "handle_connection: Could not send FTP response to client.");
+      update_stats(STAT_BADCONN);
+      goto COMMON_EXIT;
+    }
+#endif
   } else if (connptr->method == METH_CONNECT) {
     if (send_ssl_response(connptr) < 0) {
       log_message(LOG_ERR,

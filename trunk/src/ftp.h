@@ -8,5 +8,6 @@ extern ssize_t add_to_buffer_formatted(struct buffer_s *buffptr,
 				       unsigned char *inbuf, size_t buflen,
 				       struct conn_s *connptr);
 extern ssize_t add_ftpdir_header(struct conn_s *connptr);
+extern int send_ftp_response(struct conn_s *connptr);
 
 #endif

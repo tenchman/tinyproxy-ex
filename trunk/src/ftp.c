@@ -15,12 +15,15 @@
 
 #include "tinyproxy-ex.h"
 #ifdef FTP_SUPPORT
+#include <sys/uio.h>		/* writev */
 #include "reqs.h"
 #include "conns.h"
 #include "utils.h"
 #include "heap.h"
 #include "buffer.h"
 #include "log.h"
+#include "sock.h"
+#include "htmlerror.h"
 
 #define slash (info->type == 'd' ? "/" : "")
 
@@ -85,7 +88,7 @@ static int fromhex(unsigned char c)
 }
 
 
-static size_t *urldecode(char *path)
+static void urldecode(char *path)
 {
   int i;
   char *decoded = path;
@@ -105,15 +108,15 @@ static size_t *urldecode(char *path)
 
 static char *urlencode(char *name)
 {
-  unsigned char *dst, *buf, *src = name;
-  const unsigned char rfc1738unsafe[] = "<>\"#%{}|\\^~[]`' ";
-  const unsigned char rfc1738reserved[] = ";/?:@=&";
+  unsigned char *dst, *buf, *src = (unsigned char *) name;
+  const char rfc1738unsafe[] = "<>\"#%{}|\\^~[]`' ";
+  const char rfc1738reserved[] = ";/?:@=&";
 
   /* 
    * assume the worst case, all characters needs to be
    * encoded
    */
-  dst = buf = safemalloc(strlen(src) * 3 + 1);
+  dst = buf = safemalloc(strlen(name) * 3 + 1);
 
   if (!dst)
     return NULL;
@@ -131,7 +134,7 @@ static char *urlencode(char *name)
     src++;
   }
   *buf++ = '\0';
-  return dst;
+  return (char *) dst;
 }
 
 /*
@@ -166,6 +169,27 @@ static void set_ftp_greeting(struct conn_s *connptr, char *str)
   strcpy(buf, "\r\n");
 }
 
+#define HTTP_200_OK "HTTP/1.0 200 OK\r\n"
+#define HEAD_CONN_CLOSE "Connection: close\r\n\r\n"
+
+int send_ftp_response(struct conn_s *connptr)
+{
+  struct iovec iov[3];
+  char buf[256];
+  int n = 0;
+
+  iov[n].iov_base = HTTP_200_OK;
+  iov[n++].iov_len = sizeof(HTTP_200_OK) - 1;
+  if (connptr->content_length.server != -1) {
+    iov[n].iov_base = buf;
+    iov[n++].iov_len = snprintf(buf, 256, "Content-Length: %lu\r\n",
+				connptr->content_length.server);
+  }
+  iov[n].iov_base = HEAD_CONN_CLOSE;
+  iov[n++].iov_len = sizeof(HEAD_CONN_CLOSE) - 1;
+  return writev(connptr->client_fd, iov, n);
+}
+
 /*
  * Send a FTP-command to 'fd' and read the answer into 'buf'. We do some
  * parsing magic for 'motd' and other ugly things. If 'cmd' is omitted
@@ -176,9 +200,8 @@ static void set_ftp_greeting(struct conn_s *connptr, char *str)
 int send_and_receive(int fd, const char *cmd, char *buf, size_t buflen)
 {
   size_t len, total = 0;
-  struct timeval tv;
   char *pos = buf, *end, *tmp;
-  int retval;
+  int retval = -1;
 
   if (cmd && write(fd, cmd, strlen(cmd)) == -1) {
     log_message(LOG_WARNING, "Failed to send %s", cmd);
@@ -231,6 +254,7 @@ connect_ftp(struct conn_s *connptr, struct request_s *request, char *errbuf,
   char buf[4096];
   int fd, code, port = 0;
   char *path, *file, *pathcopy, host[INET_ADDRSTRLEN];
+  long int size;
 
   fd = opensock(request->host, request->port, buf, sizeof(buf));
   if (fd < 0) {
@@ -321,8 +345,14 @@ connect_ftp(struct conn_s *connptr, struct request_s *request, char *errbuf,
   /*
    * try to get the size of the requested file
    */
+  if (file) {
+    snprintf(buf, sizeof(buf), "SIZE %s\r\n", file);
+    if ((code = send_and_receive(fd, buf, buf, sizeof(buf))) == -1)
+      goto COMMON_ERROR_QUIT;
 
-  /* TODO TODO TODO */
+    if (code == 213 && (size = strtol(buf + 4, NULL, 10)))
+      connptr->content_length.server = size;
+  }
 
   /* 
    * now get the port for the data connection.
@@ -435,10 +465,10 @@ ssize_t add_ftpdir_header(struct conn_s * connptr)
   size_t len;
 
   len = snprintf(buf, sizeof(buf), FTP_HEAD);
-  add_to_buffer(connptr->sbuffer, buf, len);
+  add_to_buffer(connptr->sbuffer, (unsigned char *) buf, len);
 
   if (connptr->ftp_greeting)
-    add_to_buffer(connptr->sbuffer, connptr->ftp_greeting,
+    add_to_buffer(connptr->sbuffer, (unsigned char *) connptr->ftp_greeting,
 		  strlen(connptr->ftp_greeting));
 
   len = snprintf(buf, sizeof(buf),
@@ -450,7 +480,7 @@ ssize_t add_ftpdir_header(struct conn_s * connptr)
 		    "<img border='0' src='http://tinyproxy-ex.intern/u.png' alt='up'>"
 		    "</a> <a href='..'>Parent Directory</a>\r\n");
 
-  return add_to_buffer(connptr->sbuffer, buf, len);
+  return add_to_buffer(connptr->sbuffer, (unsigned char *) buf, len);
 }
 
 #define MAX_TOKENS 32
@@ -640,7 +670,7 @@ add_to_buffer_formatted(struct buffer_s * buffptr, unsigned char *inbuf,
     this = next + 2;
   } while (this <= eob);
 
-  return add_to_buffer(buffptr, outbuf, outpos - outbuf);
+  return add_to_buffer(buffptr, (unsigned char *) outbuf, outpos - outbuf);
 }
 
 #endif
