@@ -47,18 +47,21 @@ struct ftpinfo_s {
 static int parsepasv(char *buf, char *host)
 {
   /* 
-   * RFC 959 [Page 40]
-   * format is: "227 Entering Passive Mode (h1,h2,h3,h4,p1,p2)"
+   * RFC 959 [Page 40] format is:
+   *  "227 Entering Passive Mode (h1,h2,h3,h4,p1,p2)"
+   * DJB in contrast uses [http://cr.yp.to/ftp/retr.html]:
+   *  "227 =h1,h2,h3,h4,p1,p2"
    */
-  char *tmp = strchr(buf, '(');
   int h1, h2, h3, h4, p1, p2, port;
+  /* skip return code and SP */
+  char *tmp = buf + 4;
 
-  if (!tmp)
-    tmp = strchr(buf, '=');	/* EPLF */
+  /* advance to the first digit */
+  while (*tmp && !(isdigit(*++tmp)));
 
-  if (!tmp) {
+  if (!*tmp) {
     /* err */
-  } else if (sscanf(++tmp, "%u,%u,%u,%u,%u,%u",
+  } else if (sscanf(tmp, "%u,%u,%u,%u,%u,%u",
 		    &h1, &h2, &h3, &h4, &p1, &p2) != 6) {
     /* err */
   } else if ((port = p1 * 256 + p2) > 65535 || port < 0) {
