@@ -49,6 +49,7 @@ int yylex(void);
 %token KW_ANONYMOUS KW_XTINYPROXY
 %token KW_FILTER KW_FILTERURLS KW_FILTEREXTENDED KW_FILTER_DENY
 %token KW_FILTER_CASESENSITIVE
+%token KW_REVERSELOOKUP
 %token KW_UPSTREAM
 %token KW_CONNECTPORT KW_BIND
 %token KW_STATHOST
@@ -102,6 +103,7 @@ line
 statement
         : KW_PORT NUMBER		{ config.port = $2; }
 	| KW_TIMEOUT NUMBER		{ config.idletimeout = $2; }
+	| KW_REVERSELOOKUP yesno	{ config.reverselookup = $2; }
 	| KW_SYSLOG yesno
 	  {
 #ifdef HAVE_SYSLOG_H

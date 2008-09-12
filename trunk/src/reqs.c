@@ -1668,8 +1668,21 @@ COMMON_EXIT:
   }
   tv_e.tv_usec /= 1000;
 
-  if ((tmp = strchr(connptr->request_line, '?')))
-    *++tmp = '\0';
+  /* 
+   * strip the arguments from the request line, to preserve
+   * privacy.
+   *
+   * Assume that 'connptr->request_line' ends with HTTP/X.X
+   * and copy everything found after ' HTTP/' to the position
+   * of the former arguments.
+   **/
+  if ((tmp = strchr(connptr->request_line, '?'))) {
+    char *proto = strrchr(tmp, '/');
+    if (proto && proto > tmp + 6 && strncmp(proto - 5, " HTTP/", 6) == 0)	/* paranoia */
+      strcpy(tmp + 1, proto - 5);
+    else
+      *++tmp = '\0';
+  }
 
   /* sort of apache/squid style logline */
   log_message(LOG_NOTICE, "%s %s %d %d.%03d",

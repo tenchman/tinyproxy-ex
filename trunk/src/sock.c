@@ -241,11 +241,10 @@ int getpeer_information(int fd, char *ipaddr, char *string_addr)
 	    PEER_IP_LENGTH);
   }
 
-  result = gethostbyaddr((char *) &name.sin_addr.s_addr, 4, AF_INET);
-  if (result) {
-    strlcpy(string_addr, result->h_name, PEER_STRING_LENGTH);
-    return 0;
-  } else {
-    return -1;
+  if (config.reverselookup) {
+    result = gethostbyaddr((char *) &name.sin_addr.s_addr, 4, AF_INET);
+    if (result)
+      strlcpy(string_addr, result->h_name, PEER_STRING_LENGTH);
   }
+  return 0;
 }

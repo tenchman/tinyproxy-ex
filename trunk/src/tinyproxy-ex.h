@@ -48,13 +48,16 @@ struct upstream {
   in_addr_t ip, mask;
 };
 
+#define USE
+
 struct config_s {
   char *logf_name;
   char *config_file;
-  unsigned int syslog;		/* boolean */
+  unsigned int syslog:1;
+  unsigned int quit:1;
+  unsigned reverselookup:1;
   int port;
   char *stathost;
-  unsigned int quit;		/* boolean */
   char *username;
   char *group;
   char *ipAddr;
@@ -67,10 +70,10 @@ struct config_s {
     char *expression;
     char *aclname;
   } **filters;
-  unsigned int filter;		/* boolean */
-  unsigned int filter_url;	/* boolean */
-  unsigned int filter_extended;	/* boolean */
-  unsigned int filter_casesensitive;	/* boolean */
+  unsigned filter:1;
+  unsigned filter_url:1;
+  unsigned filter_extended:1;
+  unsigned filter_casesensitive:1;
   filter_policy_t default_policy;
 #endif				/* FILTER_ENABLE */
 #ifdef XTINYPROXY_ENABLE
