@@ -100,7 +100,8 @@ static void urldecode(char *path)
     if (path[i] == '%' &&
 	((a = fromhex(path[i + 1])) != -1) &&
 	((b = fromhex(path[i + 2])) != -1)) {
-      *decoded++ = (a << 4) + b;
+      if (a && b)		/* skip '\0' */
+	*decoded++ = (a << 4) + b;
       i += 2;
     } else {
       *decoded++ = path[i];
