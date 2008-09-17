@@ -65,7 +65,7 @@ int serve_local_file(struct conn_s *connptr, const char *filename)
   char path[PATH_MAX], *tmp, *body;
   http_message_t msg;
   struct stat st;
-  int ret, fd;
+  int ret = -1, fd;
 
   /* simply do not allow double dots and url encoded stuff */
   if (strstr(filename, "..") || strchr(filename, '%')) {
@@ -98,11 +98,11 @@ int serve_local_file(struct conn_s *connptr, const char *filename)
   if ((body = mmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, fd, 0))
       == MAP_FAILED) {
     send_http_message(connptr, 403, "Forbidden", "File is protected!");
-    return -1;
+    goto ERR_CLOSE;
   }
 
   if ((msg = http_message_create(200, "OK")) == NULL)
-    return -1;
+    goto ERR_UNMAP;
 
   if (tmp = strrchr(filename, '.')) {
     if (strcasecmp(tmp, ".css") == 0)
@@ -120,8 +120,10 @@ int serve_local_file(struct conn_s *connptr, const char *filename)
   ret = http_message_send(msg, connptr->client_fd);
   http_message_destroy(msg);
 
+ERR_UNMAP:
   munmap(body, st.st_size);
-
+ERR_CLOSE:
+  close(fd);
   return ret;
 }
 
