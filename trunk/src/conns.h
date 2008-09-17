@@ -20,6 +20,13 @@
 
 #include "tinyproxy-ex.h"
 
+struct param_s {
+  unsigned int major;
+  unsigned int minor;
+  uint64_t processed;
+  uint64_t content_length;
+};
+
 /*
  * Connection Definition
  */
@@ -61,11 +68,9 @@ struct conn_s {
   int error_number;
   char *error_string;
 
-  /* A Content-Length value from the remote server */
-  struct {
-    long int server;
-    long int client;
-  } content_length;
+  /* content-length, processed, protocol version */
+  struct param_s server;
+  struct param_s client;
 
   /*
    * Store the client's IP and hostname information
@@ -73,13 +78,6 @@ struct conn_s {
   char *client_ip_addr;
   char *client_string_addr;
 
-  /*
-   * Store the incoming request's HTTP protocol.
-   */
-  struct {
-    unsigned int major;
-    unsigned int minor;
-  } protocol;
   /*
    * Pointer to upstream proxy.
    */

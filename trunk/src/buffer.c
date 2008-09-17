@@ -247,6 +247,8 @@ ssize_t read_buffer(int fd, struct buffer_s * buffptr, struct conn_s * connptr)
 #endif
       case EINTR:
 	return 0;
+      case ECONNRESET:
+	return -1;
       default:
 	log_message(LOG_ERR,
 		    "readbuff: recv() error \"%s\" on file descriptor %d",

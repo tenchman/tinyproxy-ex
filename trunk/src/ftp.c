@@ -184,10 +184,10 @@ int send_ftp_response(struct conn_s *connptr)
 
   iov[n].iov_base = HTTP_200_OK;
   iov[n++].iov_len = sizeof(HTTP_200_OK) - 1;
-  if (connptr->content_length.server != -1) {
+  if (connptr->server.content_length != -1) {
     iov[n].iov_base = buf;
     iov[n++].iov_len = snprintf(buf, 256, "Content-Length: %lu\r\n",
-				connptr->content_length.server);
+				connptr->server.content_length);
   }
   iov[n].iov_base = HEAD_CONN_CLOSE;
   iov[n++].iov_len = sizeof(HEAD_CONN_CLOSE) - 1;
@@ -355,7 +355,7 @@ connect_ftp(struct conn_s *connptr, struct request_s *request, char *errbuf,
       goto COMMON_ERROR_QUIT;
 
     if (code == 213 && (size = strtol(buf + 4, NULL, 10)))
-      connptr->content_length.server = size;
+      connptr->server.content_length = size;
   }
 
   /* 

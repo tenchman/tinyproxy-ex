@@ -74,10 +74,12 @@ struct conn_s *initialize_conn(int client_fd, const char *ipaddr,
   connptr->method = METH_UNKNOWN;
   connptr->show_stats = FALSE;
 
-  connptr->protocol.major = connptr->protocol.minor = 0;
+  connptr->server.major = connptr->server.minor = 0;
+  connptr->client.major = connptr->client.minor = 0;
 
   /* There is _no_ content length initially */
-  connptr->content_length.server = connptr->content_length.client = -1;
+  connptr->server.content_length = connptr->client.content_length = -1;
+  connptr->server.processed = connptr->client.processed = 0;
 
   connptr->client_ip_addr = safestrdup(ipaddr);
   connptr->client_string_addr = safestrdup(string_addr);

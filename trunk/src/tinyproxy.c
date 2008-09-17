@@ -138,6 +138,9 @@ Options:\n\
 #ifdef TRANSPARENT_PROXY
   printf("    Transparent Proxy Support\n");
 #endif				/* TRANSPARENT_PROXY */
+#ifdef FTP_SUPPORT
+  printf("    FTP over HTTP Support\n");
+#endif
 }
 
 int main(int argc, char **argv)
