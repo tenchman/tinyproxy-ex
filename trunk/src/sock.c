@@ -127,18 +127,22 @@ int opensock(char *ip_addr, uint16_t port, char *errbuf, size_t errbuflen)
       snprintf(errbuf, errbuflen,
 	       "Could not bind local address \"%s\" because of %s",
 	       config.bind_address, strerror(errno));
-      log_message(LOG_ERR, "opensock: %s", errbuf);
-      return -1;
+      goto COMMON_ERROR;
     }
   }
 
   if (connect(sock_fd, (struct sockaddr *) &port_info, sizeof(port_info)) < 0) {
     snprintf(errbuf, errbuflen, "connect() error \"%s\".", strerror(errno));
-    log_message(LOG_ERR, "opensock: %s", errbuf);
-    return -1;
+    goto COMMON_ERROR;
   }
 
   return sock_fd;
+
+COMMON_ERROR:
+
+  close(sock_fd);
+  log_message(LOG_ERR, "opensock: %s", errbuf);
+  return -1;
 }
 
 /*
