@@ -184,9 +184,9 @@ int send_ftp_response(struct conn_s *connptr)
 
   iov[n].iov_base = HTTP_200_OK;
   iov[n++].iov_len = sizeof(HTTP_200_OK) - 1;
-  if (connptr->server.content_length != -1) {
+  if (connptr->server.content_length != LENGTH_NONE) {
     iov[n].iov_base = buf;
-    iov[n++].iov_len = snprintf(buf, 256, "Content-Length: %lu\r\n",
+    iov[n++].iov_len = snprintf(buf, 256, "Content-Length: %llu\r\n",
 				connptr->server.content_length);
   }
   iov[n].iov_base = HEAD_CONN_CLOSE;

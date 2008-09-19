@@ -420,7 +420,7 @@ int filter_ofcd(const unsigned char *pat, const char *uri, char **status)
   close(sockfd);
 
   if (len != 32) {
-    log_message(LOG_ERR, "invalid answer from ofcd: %s", buf);
+    log_message(LOG_ERR, "unexpected answer from ofcd: %s", buf);
     return -1;
   }
 

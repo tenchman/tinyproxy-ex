@@ -763,7 +763,7 @@ static struct request_s *process_request(struct conn_s *connptr,
  * server headers can be processed.
  *	- rjkaes
  */
-static int pull_client_data(struct conn_s *connptr, long int length)
+static int pull_client_data(struct conn_s *connptr, uint64_t length)
 {
   char *buffer;
   ssize_t len;
@@ -781,8 +781,8 @@ static int pull_client_data(struct conn_s *connptr, long int length)
       if (safe_write(connptr->server_fd, buffer, len) < 0)
 	goto ERROR_EXIT;
     }
-    connptr->server.processed += len;
-    length -= len;
+    connptr->server.processed += (uint64_t) len;
+    length -= (uint64_t) len;
   } while (length > 0);
 
   /*
@@ -973,7 +973,7 @@ static int remove_connection_headers(hashmap_t hashofheaders)
  * If there is a Content-Length header, then return the value; otherwise, return
  * a negative number.
  */
-static long get_content_length(hashmap_t hashofheaders)
+static uint64_t get_content_length(hashmap_t hashofheaders)
 {
   ssize_t len;
   char *data;
@@ -981,7 +981,7 @@ static long get_content_length(hashmap_t hashofheaders)
 
   len = hashmap_entry_by_key(hashofheaders, "content-length", (void **) &data);
   if (len > 0)
-    content_length = atol(data);
+    content_length = (uint64_t) strtoull(data, NULL, 10);
 
   return content_length;
 }
@@ -1138,7 +1138,7 @@ process_client_headers(struct conn_s *connptr, hashmap_t hashofheaders)
    * Spin here pulling the data from the client.
    */
 PULL_CLIENT_DATA:
-  if (connptr->client.content_length > 0)
+  if (connptr->client.content_length != LENGTH_NONE)
     return pull_client_data(connptr, connptr->client.content_length);
   else
     return ret;
@@ -1341,23 +1341,33 @@ static void relay_connection(struct conn_s *connptr)
       if (bytes_received < 0)
 	break;
 
-      connptr->server.content_length -= bytes_received;
+      connptr->server.content_length -= (uint64_t) bytes_received;
       if (connptr->server.content_length == 0)
 	break;
     }
+    /*
+     * read request body from client, normally allready done by
+     * pull_client_data()
+     */
     if (FD_ISSET(connptr->client_fd, &rset)
 	&& read_buffer(connptr->client_fd, connptr->cbuffer, connptr) < 0) {
       break;
     }
+    /*
+     * write the request body to the server
+     */
     if (FD_ISSET(connptr->server_fd, &wset)
 	&& (ret = write_buffer(connptr->server_fd, connptr->cbuffer)) < 0) {
       break;
-      connptr->server.processed += ret;
+      connptr->server.processed += (uint64_t) ret;
     }
+    /*
+     * write response body to the client
+     */
     if (FD_ISSET(connptr->client_fd, &wset)
 	&& (ret = write_buffer(connptr->client_fd, connptr->sbuffer)) < 0) {
       break;
-      connptr->client.processed += ret;
+      connptr->client.processed += (uint64_t) ret;
     }
   }
   /*
@@ -1374,7 +1384,7 @@ static void relay_connection(struct conn_s *connptr)
   while (buffer_size(connptr->sbuffer) > 0) {
     if ((ret = write_buffer(connptr->client_fd, connptr->sbuffer)) < 0)
       break;
-    connptr->client.processed += ret;
+    connptr->client.processed += (uint64_t) ret;
   }
 
   shutdown(connptr->client_fd, SHUT_WR);
@@ -1386,7 +1396,7 @@ static void relay_connection(struct conn_s *connptr)
   while (buffer_size(connptr->cbuffer) > 0) {
     if ((ret = write_buffer(connptr->server_fd, connptr->cbuffer)) < 0)
       break;
-    connptr->server.processed += ret;
+    connptr->server.processed += (uint64_t) ret;
   }
 #ifdef FTP_SUPPORT
   /*

@@ -104,7 +104,7 @@ int serve_local_file(struct conn_s *connptr, const char *filename)
   if ((msg = http_message_create(200, "OK")) == NULL)
     goto ERR_UNMAP;
 
-  if (tmp = strrchr(filename, '.')) {
+  if ((tmp = strrchr(filename, '.'))) {
     if (strcasecmp(tmp, ".css") == 0)
       headers[1] = "Content-type: text/css";
     else if (strcasecmp(tmp, ".html") == 0)
@@ -117,7 +117,8 @@ int serve_local_file(struct conn_s *connptr, const char *filename)
 
   http_message_add_headers(msg, headers, 3);
   http_message_set_body(msg, body, st.st_size);
-  ret = http_message_send(msg, connptr->client_fd);
+  if ((ret = http_message_send(msg, connptr->client_fd)) != -1)
+    connptr->client.processed = (uint64_t) st.st_size;
   http_message_destroy(msg);
 
 ERR_UNMAP:
