@@ -1356,17 +1356,17 @@ static void relay_connection(struct conn_s *connptr)
     /*
      * write the request body to the server
      */
-    if (FD_ISSET(connptr->server_fd, &wset)
-	&& (ret = write_buffer(connptr->server_fd, connptr->cbuffer)) < 0) {
-      break;
+    if (FD_ISSET(connptr->server_fd, &wset)) {
+      if ((ret = write_buffer(connptr->server_fd, connptr->cbuffer)) < 0)
+	break;
       connptr->server.processed += (uint64_t) ret;
     }
     /*
      * write response body to the client
      */
-    if (FD_ISSET(connptr->client_fd, &wset)
-	&& (ret = write_buffer(connptr->client_fd, connptr->sbuffer)) < 0) {
-      break;
+    if (FD_ISSET(connptr->client_fd, &wset)) {
+      if ((ret = write_buffer(connptr->client_fd, connptr->sbuffer)) < 0)
+	break;
       connptr->client.processed += (uint64_t) ret;
     }
   }
