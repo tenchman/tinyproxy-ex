@@ -258,6 +258,20 @@ int main(int argc, char **argv)
     config.idletimeout = MAX_IDLE_TIME;
   }
 
+  if (config.connecttimeout <= 0)
+    config.connecttimeout = 10;
+
+  if (config.connectretries <= 0)
+    config.connectretries = 3;
+
+  /* 
+   * warn if the overall timeout value exceeds 2min
+   */
+  if (config.connecttimeout * config.connectretries > 120)
+    log_message(LOG_WARNING, "Your overall connect timeout is greater than 2 "
+		"minutes (timeout(%dsec) * retries(%d)), anyway... You are old enough!",
+		config.connecttimeout, config.connectretries);
+
   init_stats();
 
   /*
@@ -312,8 +326,8 @@ int main(int argc, char **argv)
       }
       if (setgid(thisgroup->gr_gid) < 0) {
 	fprintf(stderr,
-		"%s: Unable to change to group \"%s\".\n",
-		argv[0], config.group);
+		"%s: Unable to change to group \"%s\".\n", argv[0],
+		config.group);
 	exit(EX_CANTCREAT);
       }
       log_message(LOG_INFO, "Now running as group \"%s\".", config.group);
@@ -327,8 +341,8 @@ int main(int argc, char **argv)
       }
       if (setuid(thisuser->pw_uid) < 0) {
 	fprintf(stderr,
-		"%s: Unable to change to user \"%s\".",
-		argv[0], config.username);
+		"%s: Unable to change to user \"%s\".", argv[0],
+		config.username);
 	exit(EX_CANTCREAT);
       }
       log_message(LOG_INFO, "Now running as user \"%s\".", config.username);

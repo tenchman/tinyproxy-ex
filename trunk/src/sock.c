@@ -83,13 +83,16 @@ COMMON_EXIT:
  * default. Also, the routine first checks to see if the address is in
  * dotted-decimal form before it does a name lookup.
  *      - rjkaes
+ *
+ * Rewrote the whole thing to use nonblocking connect
+ *	- tenchio
  */
 int opensock(char *ip_addr, uint16_t port, char *errbuf, size_t errbuflen)
 {
   int sock_fd;
   struct sockaddr_in port_info;
   struct sockaddr_in bind_addr;
-  int ret;
+  int ret, retry = 0;
 
   assert(ip_addr != NULL);
   assert(errbuf != NULL);
@@ -110,33 +113,69 @@ int opensock(char *ip_addr, uint16_t port, char *errbuf, size_t errbuflen)
 
   port_info.sin_port = htons(port);
 
-  if ((sock_fd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
-    snprintf(errbuf, errbuflen, "socket() error \"%s\".", strerror(errno));
-    log_message(LOG_ERR, "opensock: %s", errbuf);
-    return -1;
-  }
+  /*
+   * try to connect to the given address 'config.connectretries' times
+   *
+   * the max. timeout is
+   *   config.connecttimeout * config.connectretries
+   */
+  while (config.connectretries > retry) {
 
-  /* Bind to the specified address */
-  if (config.bind_address) {
-    memset(&bind_addr, 0, sizeof(bind_addr));
-    bind_addr.sin_family = AF_INET;
-    bind_addr.sin_addr.s_addr = inet_addr(config.bind_address);
+    if ((sock_fd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
+      snprintf(errbuf, errbuflen, "socket() error \"%s\".", strerror(errno));
+      log_message(LOG_ERR, "opensock: %s", errbuf);
+      return -1;
+    }
 
-    ret = bind(sock_fd, (struct sockaddr *) &bind_addr, sizeof(bind_addr));
-    if (ret < 0) {
-      snprintf(errbuf, errbuflen,
-	       "Could not bind local address \"%s\" because of %s",
-	       config.bind_address, strerror(errno));
-      goto COMMON_ERROR;
+    /* Bind to the specified address */
+    if (config.bind_address) {
+      memset(&bind_addr, 0, sizeof(bind_addr));
+      bind_addr.sin_family = AF_INET;
+      bind_addr.sin_addr.s_addr = inet_addr(config.bind_address);
+
+      ret = bind(sock_fd, (struct sockaddr *) &bind_addr, sizeof(bind_addr));
+      if (ret < 0) {
+	snprintf(errbuf, errbuflen,
+		 "Could not bind local address \"%s\" because of %s",
+		 config.bind_address, strerror(errno));
+	goto COMMON_ERROR;
+      }
+    }
+
+    socket_nonblocking(sock_fd);
+
+    /* the preferred way out: success! */
+    if ((ret =
+	 connect(sock_fd, (struct sockaddr *) &port_info,
+		 sizeof(port_info))) == 0)
+      return sock_fd;
+
+    if (errno == EINPROGRESS) {
+      struct timeval tv;
+      fd_set fds;
+
+      FD_ZERO(&fds);
+      FD_SET(sock_fd, &fds);
+      tv.tv_sec = config.connecttimeout;
+      tv.tv_usec = 0;
+
+      switch ((ret = select(sock_fd + 1, NULL, &fds, NULL, &tv))) {
+      case -1:
+	snprintf(errbuf, errbuflen, "socket() error \"%s\".", strerror(errno));
+	goto COMMON_ERROR;
+      default:
+	if (FD_ISSET(sock_fd, &fds)) {
+	  socket_blocking(sock_fd);
+	  return sock_fd;
+	}
+      case 0:
+	retry++;
+	close(sock_fd);
+	continue;
+      }
     }
   }
-
-  if (connect(sock_fd, (struct sockaddr *) &port_info, sizeof(port_info)) < 0) {
-    snprintf(errbuf, errbuflen, "connect() error \"%s\".", strerror(errno));
-    goto COMMON_ERROR;
-  }
-
-  return sock_fd;
+  snprintf(errbuf, errbuflen, "connect() timeout.");
 
 COMMON_ERROR:
 

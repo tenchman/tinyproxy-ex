@@ -1402,9 +1402,9 @@ static void relay_connection(struct conn_s *connptr)
   /*
    * Try to send QUIT to the ftp server
    */
+
   if (!UPSTREAM_CONFIGURED() && connptr->method == METH_FTP) {
-    char buf[256];
-    send_and_receive(connptr->server_cfd, "QUIT\r\n", buf, sizeof(buf));
+    send_and_receive(connptr->server_cfd, "QUIT\r\n", NULL, 0);
   }
 #endif
   return;
@@ -1672,40 +1672,47 @@ send_error:
    */
 COMMON_EXIT:
 
-  gettimeofday(&tv_e, NULL);
-
-  tv_e.tv_sec -= tv_s.tv_sec;
-  tv_e.tv_usec -= tv_s.tv_usec;
-  if (tv_e.tv_usec < 0) {
-    tv_e.tv_usec += 1000000;
-    tv_e.tv_sec--;
-  }
-  tv_e.tv_usec /= 1000;
-
   /* 
-   * strip the arguments from the request line, to preserve
-   * privacy.
-   *
-   * Assume that 'connptr->request_line' ends with HTTP/X.X
-   * and copy everything found after ' HTTP/' to the position
-   * of the former arguments.
-   **/
-  if ((tmp = strchr(connptr->request_line, '?'))) {
-    char *proto = strrchr(tmp, '/');
-    if (proto && proto > tmp + 6 && strncmp(proto - 5, " HTTP/", 6) == 0)	/* paranoia */
-      strcpy(tmp + 1, proto - 5);
-    else
-      *++tmp = '\0';
+   * do not fill the logs with requests to local files, i.e. FTP
+   * directory listings and such
+   */
+  if (!connptr->local_request) {
+
+    gettimeofday(&tv_e, NULL);
+
+    tv_e.tv_sec -= tv_s.tv_sec;
+    tv_e.tv_usec -= tv_s.tv_usec;
+    if (tv_e.tv_usec < 0) {
+      tv_e.tv_usec += 1000000;
+      tv_e.tv_sec--;
+    }
+    tv_e.tv_usec /= 1000;
+
+    /* 
+     * strip the arguments from the request line, to preserve
+     * privacy.
+     *
+     * Assume that 'connptr->request_line' ends with HTTP/X.X
+     * and copy everything found after ' HTTP/' to the position
+     * of the former arguments.
+     **/
+    if ((tmp = strchr(connptr->request_line, '?'))) {
+      char *proto = strrchr(tmp, '/');
+      if (proto && proto > tmp + 6 && strncmp(proto - 5, " HTTP/", 6) == 0)	/* paranoia */
+	strcpy(tmp + 1, proto - 5);
+      else
+	*++tmp = '\0';
+    }
+
+    /* sort of apache/squid style logline */
+    log_message(LOG_NOTICE, "%s %s %d [%llu:%llu] %d.%03d",
+		peer_ipaddr,
+		connptr->request_line,
+		connptr->error_number != -1 ? connptr->error_number : 200,
+		connptr->server.processed, connptr->client.processed,
+		tv_e.tv_sec, tv_e.tv_usec);
+
   }
-
-  /* sort of apache/squid style logline */
-  log_message(LOG_NOTICE, "%s %s %d [%llu:%llu] %d.%03d",
-	      peer_ipaddr,
-	      connptr->request_line,
-	      connptr->error_number != -1 ? connptr->error_number : 200,
-	      connptr->server.processed, connptr->client.processed,
-	      tv_e.tv_sec, tv_e.tv_usec);
-
 
   if (hashofheaders)
     hashmap_delete(hashofheaders);

@@ -51,7 +51,7 @@ int yylex(void);
 %token KW_FILTER_CASESENSITIVE
 %token KW_REVERSELOOKUP
 %token KW_UPSTREAM
-%token KW_CONNECTPORT KW_BIND
+%token KW_BIND KW_CONNECTPORT KW_CONNECTTIMEOUT KW_CONNECTRETRIES
 %token KW_STATHOST
 %token KW_ERRORPAGE KW_DEFAULT_ERRORPAGE
 %token KW_STATPAGE
@@ -230,6 +230,8 @@ statement
           }
         | KW_LOGLEVEL loglevels         { set_log_level($2); }
         | KW_CONNECTPORT NUMBER         { add_connect_port_allowed($2); }
+	| KW_CONNECTTIMEOUT NUMBER      { config.connecttimeout = $2; }
+	| KW_CONNECTRETRIES NUMBER      { config.connectretries = $2; }
         | KW_BIND NUMERIC_ADDRESS
           {
 #ifndef TRANSPARENT_PROXY

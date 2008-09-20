@@ -57,6 +57,8 @@ struct config_s {
   unsigned int quit:1;
   unsigned reverselookup:1;
   int port;
+  int connecttimeout;
+  int connectretries;
   char *stathost;
   char *username;
   char *group;
