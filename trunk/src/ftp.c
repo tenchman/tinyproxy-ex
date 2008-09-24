@@ -582,6 +582,7 @@ static int scan_direntry(char *buf, size_t len, struct ftpinfo_s *info)
     snprintf(timebuf, sizeof(timebuf), "%s %s", tokens[0], tokens[1]);
     info->date = safestrdup(timebuf);
     info->name = safestrdup(tokens[3]);
+    info->link = NULL;
     if (strcasecmp(tokens[2], "<dir>") == 0) {
       info->type = 'd';
       info->size = 0;
