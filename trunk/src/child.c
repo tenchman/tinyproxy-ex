@@ -35,7 +35,7 @@ static socklen_t addrlen;
  */
 struct child_s {
   pid_t tid;
-  unsigned int connects;
+  int connects;
   enum { T_EMPTY, T_WAITING, T_CONNECTED } status;
 };
 

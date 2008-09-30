@@ -93,7 +93,7 @@ static int fromhex(unsigned char c)
 
 static void urldecode(char *path)
 {
-  int i;
+  size_t i;
   char *decoded = path;
   for (i = 0; i <= strlen(path); i++) {
     int a, b;
@@ -203,7 +203,8 @@ int send_ftp_response(struct conn_s *connptr)
  */
 int send_and_receive(int fd, const char *cmd, char *buf, size_t buflen)
 {
-  size_t len, total = 0;
+  ssize_t len;
+  size_t total = 0;
   char *pos = buf, *end, *tmp;
   int retval = -1;
 
@@ -287,7 +288,9 @@ connect_ftp(struct conn_s *connptr, struct request_s *request, char *errbuf,
 
   switch (code) {
   case 331:
-    if ((code = send_and_receive(fd, "PASS user@\r\n", buf, sizeof(buf))) == -1)
+    if ((code =
+	 send_and_receive(fd, "PASS ftp@" PACKAGE_NAME ".org\r\n", buf,
+			  sizeof(buf))) == -1)
       goto COMMON_ERROR_QUIT;
     if (code != 230) {
       log_message(LOG_WARNING, "PASS: Unexpected answer: %s", buf);
@@ -457,6 +460,7 @@ COMMON_ERROR_QUIT:
   safefree(pathcopy);
   if (connptr->server_fd != -1)
     close(connptr->server_fd);
+  connptr->statuscode = code;
   close(fd);
   return -1;
 }

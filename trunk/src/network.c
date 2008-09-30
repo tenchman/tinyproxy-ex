@@ -30,14 +30,11 @@
  */
 ssize_t safe_write(int fd, const char *buffer, size_t count)
 {
-  ssize_t len;
-  size_t bytestosend;
+  ssize_t len, bytestosend = (ssize_t) count;
 
   assert(fd >= 0);
   assert(buffer != NULL);
-  assert(count > 0);
-
-  bytestosend = count;
+  assert(bytestosend > 0);
 
   while (1) {
     len = send(fd, buffer, bytestosend, MSG_NOSIGNAL);
@@ -85,7 +82,7 @@ ssize_t safe_read(int fd, char *buffer, size_t count)
 int write_message(int fd, const char *fmt, ...)
 {
   ssize_t n;
-  size_t size = (1024 * 8);	/* start with 8 KB and go from there */
+  ssize_t size = (1024 * 8);	/* start with 8 KB and go from there */
   char *buf, *tmpbuf;
   va_list ap;
 

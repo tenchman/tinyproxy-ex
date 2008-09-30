@@ -29,8 +29,13 @@
 #include "stats.h"
 #include "utils.h"
 
+#define STAT_NUM_TYPE unsigned long int
+
 struct stat_s {
   unsigned long int num_reqs;
+  unsigned long int num_reqs_http;
+  unsigned long int num_reqs_ftp;
+  unsigned long int num_reqs_connect;
   unsigned long int num_badcons;
   unsigned long int num_open;
   unsigned long int num_refused;
@@ -52,6 +57,13 @@ void init_stats(void)
   memset(stats, 0, sizeof(struct stat));
 }
 
+int add_stat_variable(struct conn_s *connptr, char *key, STAT_NUM_TYPE value)
+{
+  char buf[128];
+  snprintf(buf, sizeof(buf), "%lu", value);
+  add_error_variable(connptr, key, buf);
+}
+
 /*
  * Display the statics of the tinyproxy-ex server.
  */
@@ -71,16 +83,7 @@ int showstats(struct conn_s *connptr)
       "</blockquote>\r\n</body></html>\r\n";
 
   char *message_buffer;
-  char opens[16], reqs[16], badconns[16], denied[16], refused[16],
-      ofcdmatch[16];
   FILE *statfile;
-
-  snprintf(opens, sizeof(opens), "%lu", stats->num_open);
-  snprintf(reqs, sizeof(reqs), "%lu", stats->num_reqs);
-  snprintf(badconns, sizeof(badconns), "%lu", stats->num_badcons);
-  snprintf(denied, sizeof(denied), "%lu", stats->num_denied);
-  snprintf(refused, sizeof(refused), "%lu", stats->num_refused);
-  snprintf(ofcdmatch, sizeof(ofcdmatch), "%lu", stats->num_ofcdmatch);
 
   if (!config.statpage || (!(statfile = fopen(config.statpage, "r")))) {
     message_buffer = safemalloc(MAXBUFFSIZE);
@@ -103,12 +106,16 @@ int showstats(struct conn_s *connptr)
     return 0;
   }
 
-  add_error_variable(connptr, "opens", opens);
-  add_error_variable(connptr, "reqs", reqs);
-  add_error_variable(connptr, "badconns", badconns);
-  add_error_variable(connptr, "deniedconns", denied);
-  add_error_variable(connptr, "ofcdmatch", ofcdmatch);
-  add_error_variable(connptr, "refusedconns", refused);
+  add_stat_variable(connptr, "opens", stats->num_open);
+  add_stat_variable(connptr, "reqs", stats->num_reqs);
+  add_stat_variable(connptr, "reqs_ftp", stats->num_reqs_ftp);
+  add_stat_variable(connptr, "reqs_http", stats->num_reqs_http);
+  add_stat_variable(connptr, "reqs_connect", stats->num_reqs_connect);
+  add_stat_variable(connptr, "badconns", stats->num_badcons);
+  add_stat_variable(connptr, "deniedconns", stats->num_denied);
+  add_stat_variable(connptr, "ofcdmatch", stats->num_ofcdmatch);
+  add_stat_variable(connptr, "refusedconns", stats->num_refused);
+
   add_standard_vars(connptr);
   send_http_headers(connptr, 200, "Statistic requested");
   send_html_file(statfile, connptr);
@@ -126,6 +133,15 @@ int update_stats(status_t update_level)
   switch (update_level) {
   case STAT_BADCONN:
     ++stats->num_badcons;
+    break;
+  case STAT_TYPE_FTP:
+    ++stats->num_reqs_ftp;
+    break;
+  case STAT_TYPE_HTTP:
+    ++stats->num_reqs_http;
+    break;
+  case STAT_TYPE_CONNECT:
+    ++stats->num_reqs_connect;
     break;
   case STAT_OPEN:
     ++stats->num_open;

@@ -89,7 +89,7 @@ COMMON_EXIT:
  */
 int opensock(char *ip_addr, uint16_t port, char *errbuf, size_t errbuflen)
 {
-  int sock_fd;
+  int sock_fd = -1;
   struct sockaddr_in port_info;
   struct sockaddr_in bind_addr;
   int ret, retry = 0;

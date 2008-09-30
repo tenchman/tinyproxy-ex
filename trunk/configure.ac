@@ -178,7 +178,7 @@ dnl CFLAGS variable to it; otherwise, start with an empty CFLAGS
 if test x"$ac_env_CFLAGS_set" = x"set" ; then
     CFLAGS=$ac_env_CFLAGS_value
 else
-    CFLAGS=""
+    CFLAGS="-Wall -Wsign-compare"
 fi
 
 dnl Make sure YACC is actually bison

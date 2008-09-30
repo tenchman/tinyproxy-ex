@@ -68,6 +68,8 @@ struct conn_s {
   int error_variable_count;
 
   int error_number;
+  /* responses Status-Code */
+  int statuscode;
   char *error_string;
 
   /* content-length, processed, protocol version */

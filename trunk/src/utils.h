@@ -29,5 +29,6 @@ extern int send_http_message(struct conn_s *connptr, int http_code,
 
 extern int pidfile_create(const char *path);
 extern int create_file_safely(const char *filename, unsigned int truncate_file);
+extern int serve_local_file(struct conn_s *connptr, const char *filename);
 
 #endif

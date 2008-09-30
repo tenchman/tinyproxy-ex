@@ -63,7 +63,7 @@ int add_new_errorpage(char *filepath, unsigned int errornum)
 /*
  * Get the file appropriate for a given error.
  */
-static char *get_html_file(int errornum)
+static char *get_html_file(unsigned int errornum)
 {
   int i;
 

@@ -85,6 +85,8 @@ static vector_t ports_allowed_by_connect = NULL;
  */
 void add_connect_port_allowed(int port)
 {
+  void *ptr = (void *) port;
+
   if (!ports_allowed_by_connect) {
     ports_allowed_by_connect = vector_create();
     if (!ports_allowed_by_connect) {
@@ -96,7 +98,7 @@ void add_connect_port_allowed(int port)
 
   log_message(LOG_INFO, "Adding Port [%d] to the list allowed by CONNECT",
 	      port);
-  vector_append(ports_allowed_by_connect, (void **) &port, sizeof(port));
+  vector_append(ports_allowed_by_connect, &ptr, sizeof(port));
 }
 
 /*
@@ -577,10 +579,13 @@ static struct request_s *process_request(struct conn_s *connptr,
 
       return NULL;
     }
-    if (url[0] == 'f' || url[0] == 'F')
+    if (url[0] == 'f' || url[0] == 'F') {
       connptr->method = METH_FTP;
-    else
+      update_stats(STAT_TYPE_FTP);
+    } else {
       connptr->method = METH_HTTP;
+      update_stats(STAT_TYPE_HTTP);
+    }
   } else if (strcmp(request->method, "CONNECT") == 0) {
     if (extract_ssl_url(url, request) < 0) {
       indicate_http_error(connptr, 400, "Bad Request",
@@ -606,6 +611,7 @@ static struct request_s *process_request(struct conn_s *connptr,
     }
 
     connptr->method = METH_CONNECT;
+    update_stats(STAT_TYPE_CONNECT);
   } else {
 #ifdef TRANSPARENT_PROXY
     /*
@@ -617,8 +623,8 @@ static struct request_s *process_request(struct conn_s *connptr,
      * This code was written by Petr Lampa <lampa@fit.vutbr.cz>
      */
     int length;
-    char *data;
-    length = hashmap_entry_by_key(hashofheaders, "host", (void **) &data);
+    void *data;
+    length = hashmap_entry_by_key(hashofheaders, "host", &data);
     if (length <= 0) {
       struct sockaddr_in dest_addr;
 
@@ -646,8 +652,9 @@ static struct request_s *process_request(struct conn_s *connptr,
 		  request->method, url, connptr->client_fd);
     } else {
       request->host = safemalloc(length + 1);
-      if (sscanf(data, "%[^:]:%hu", request->host, &request->port) != 2) {
-	strcpy(request->host, data);
+      if (sscanf((char *) data, "%[^:]:%hu", request->host, &request->port) !=
+	  2) {
+	strcpy(request->host, (char *) data);
 	request->port = HTTP_PORT;
       }
       request->path = safemalloc(strlen(url) + 1);
@@ -929,14 +936,14 @@ static int remove_connection_headers(hashmap_t hashofheaders)
     "proxy-connection"
   };
 
-  char *data;
+  void *data;
   char *ptr;
   ssize_t len;
   int i;
 
   for (i = 0; i != (sizeof(headers) / sizeof(char *)); ++i) {
     /* Look for the connection header.  If it's not found, return. */
-    len = hashmap_entry_by_key(hashofheaders, headers[i], (void **) &data);
+    len = hashmap_entry_by_key(hashofheaders, headers[i], &data);
     if (len <= 0)
       return 0;
 
@@ -944,7 +951,7 @@ static int remove_connection_headers(hashmap_t hashofheaders)
      * Go through the data line and replace any special characters
      * with a NULL.
      */
-    ptr = data;
+    ptr = (char *) data;
     while ((ptr = strpbrk(ptr, "()<>@,;:\\\"/[]?={} \t")))
       *ptr++ = '\0';
 
@@ -952,8 +959,8 @@ static int remove_connection_headers(hashmap_t hashofheaders)
      * All the tokens are separated by NULLs.  Now go through the
      * token and remove them from the hashofheaders.
      */
-    ptr = data;
-    while (ptr < data + len) {
+    ptr = (char *) data;
+    while (ptr < (char *) data + len) {
       hashmap_remove(hashofheaders, ptr);
 
       /* Advance ptr to the next token */
@@ -976,12 +983,12 @@ static int remove_connection_headers(hashmap_t hashofheaders)
 static uint64_t get_content_length(hashmap_t hashofheaders)
 {
   ssize_t len;
-  char *data;
+  void *data;
   long content_length = -1;
 
-  len = hashmap_entry_by_key(hashofheaders, "content-length", (void **) &data);
+  len = hashmap_entry_by_key(hashofheaders, "content-length", &data);
   if (len > 0)
-    content_length = (uint64_t) strtoull(data, NULL, 10);
+    content_length = (uint64_t) strtoull((char *) data, NULL, 10);
 
   return content_length;
 }
@@ -999,7 +1006,7 @@ write_via_header(int fd, hashmap_t hashofheaders,
 {
   ssize_t len;
   char hostname[512];
-  char *data;
+  void *data;
   int ret;
 
   if (config.via_proxy_name) {
@@ -1012,11 +1019,12 @@ write_via_header(int fd, hashmap_t hashofheaders,
    * See if there is a "Via" header.  If so, again we need to do a bit
    * of processing.
    */
-  len = hashmap_entry_by_key(hashofheaders, "via", (void **) &data);
+  len = hashmap_entry_by_key(hashofheaders, "via", &data);
   if (len > 0) {
     ret = write_message(fd,
 			"Via: %s, %hu.%hu %s (%s/%s)\r\n",
-			data, major, minor, hostname, PACKAGE, VERSION);
+			(char *) data, major, minor, hostname, PACKAGE,
+			VERSION);
 
     hashmap_remove(hashofheaders, "via");
   } else {
@@ -1054,7 +1062,8 @@ process_client_headers(struct conn_s *connptr, hashmap_t hashofheaders)
   hashmap_iter iter;
   int ret = 0;
 
-  char *data, *header;
+  char *data;
+  void *header;
 
   /*
    * Don't send headers if there's already an error, if the request was
@@ -1104,10 +1113,12 @@ process_client_headers(struct conn_s *connptr, hashmap_t hashofheaders)
   iter = hashmap_first(hashofheaders);
   if (iter >= 0) {
     for (; !hashmap_is_end(hashofheaders, iter); ++iter) {
-      hashmap_return_entry(hashofheaders, iter, &data, (void **) &header);
+      hashmap_return_entry(hashofheaders, iter, &data, &header);
 
       if (!is_anonymous_enabled() || anonymous_search(data) > 0) {
-	ret = write_message(connptr->server_fd, "%s: %s\r\n", data, header);
+	ret =
+	    write_message(connptr->server_fd, "%s: %s\r\n", data,
+			  (char *) header);
 	if (ret < 0) {
 	  indicate_http_error(connptr, 503,
 			      "Could not send data to remote server",
@@ -1158,7 +1169,8 @@ static int process_server_headers(struct conn_s *connptr)
 
   hashmap_t hashofheaders;
   hashmap_iter iter;
-  char *data, *header;
+  char *data;
+  void *header;
   ssize_t len;
   int i;
   int ret;
@@ -1183,6 +1195,8 @@ retry:
     safefree(response_line);
     goto retry;
   }
+
+  sscanf(response_line, "%[^ ] %d", data, &connptr->statuscode);
 
   hashofheaders = hashmap_create(HEADER_BUCKETS);
   if (!hashofheaders) {
@@ -1244,9 +1258,11 @@ retry:
   iter = hashmap_first(hashofheaders);
   if (iter >= 0) {
     for (; !hashmap_is_end(hashofheaders, iter); ++iter) {
-      hashmap_return_entry(hashofheaders, iter, &data, (void **) &header);
+      hashmap_return_entry(hashofheaders, iter, &data, &header);
 
-      ret = write_message(connptr->client_fd, "%s: %s\r\n", data, header);
+      ret =
+	  write_message(connptr->client_fd, "%s: %s\r\n", data,
+			(char *) header);
       if (ret < 0)
 	goto ERROR_EXIT;
     }
@@ -1312,7 +1328,7 @@ static void relay_connection(struct conn_s *connptr)
     if (ret == 0) {
       long tdiff;
       tdiff = (long) last_access - (long) time(NULL);
-      if (tdiff > config.idletimeout) {
+      if (tdiff > (long) config.idletimeout) {
 	log_message(LOG_INFO,
 		    "Idle Timeout (after select) as %li > %u.",
 		    tdiff, config.idletimeout);
@@ -1374,7 +1390,8 @@ static void relay_connection(struct conn_s *connptr)
 
 #ifdef FTP_SUPPORT
   if (connptr->ftp_isdir)
-    add_to_buffer(connptr->sbuffer, FTP_FOOT, sizeof(FTP_FOOT) - 1);
+    add_to_buffer(connptr->sbuffer, (unsigned char *) FTP_FOOT,
+		  sizeof(FTP_FOOT) - 1);
 #endif
 
   socket_blocking(connptr->client_fd);
@@ -1401,7 +1418,13 @@ static void relay_connection(struct conn_s *connptr)
    */
 
   if (!UPSTREAM_CONFIGURED() && connptr->method == METH_FTP) {
-    send_and_receive(connptr->server_cfd, "QUIT\r\n", NULL, 0);
+    char buf[1024];
+    int code;
+    code = send_and_receive(connptr->server_cfd, NULL, buf, 1024);
+    if (code != -1) {
+      connptr->statuscode = code;
+      send_and_receive(connptr->server_cfd, "QUIT\r\n", NULL, 0);
+    }
   }
 #endif
   return;
@@ -1705,10 +1728,11 @@ COMMON_EXIT:
     }
 
     /* sort of apache/squid style logline */
-    log_message(LOG_NOTICE, "%s %s %d [%llu:%llu] %d.%03d",
+    log_message(LOG_NOTICE, "%s %s %d/%d [%llu:%llu] %d.%03d",
 		peer_ipaddr,
 		connptr->request_line,
 		connptr->error_number != -1 ? connptr->error_number : 200,
+		connptr->statuscode,
 		connptr->server.processed, connptr->client.processed,
 		tv_e.tv_sec, tv_e.tv_usec);
 
