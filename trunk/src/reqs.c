@@ -1048,9 +1048,6 @@ process_client_headers(struct conn_s *connptr, hashmap_t hashofheaders)
     "proxy-authenticate",
     "proxy-authorization",
     "proxy-connection",
-    "te",
-    "trailers",
-    "transfer-encoding",
     "upgrade"
   };
   int i;
