@@ -1648,6 +1648,9 @@ send_error:
       update_stats(STAT_BADCONN);
       goto COMMON_EXIT;
     }
+    /* lftp CWD request, nothing to relay */
+    if (strncmp(connptr->request_line, "HEAD ", 5) == 0)
+      goto COMMON_EXIT;
 #endif
   } else if (connptr->method == METH_CONNECT) {
     if (send_ssl_response(connptr) < 0) {

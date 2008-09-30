@@ -255,10 +255,11 @@ int
 connect_ftp(struct conn_s *connptr, struct request_s *request, char *errbuf,
 	    size_t errbufsize)
 {
-  char buf[4096];
+  char *tmp, buf[4096];
   int fd, code, port = 0;
   char *path, *file, *pathcopy, host[INET_ADDRSTRLEN];
   long int size;
+  char type = 0;
 
   fd = opensock(request->host, request->port, buf, sizeof(buf));
   if (fd < 0) {
@@ -304,11 +305,22 @@ connect_ftp(struct conn_s *connptr, struct request_s *request, char *errbuf,
   /* decode url encoded paths */
   urldecode(request->path);
 
+  path = pathcopy = safestrdup(request->path);
+
+  /* 
+   * extract the type from "lftp" style urls, i.e.
+   * GET ftp://ftp.somewhere.loc/dingens.ext;type=i HTTP/1.1
+   */
+  if ((tmp = strrchr(path, ';'))) {
+    if (strncasecmp(tmp + 1, "type=", 5) == 0) {
+      type = (char) *(tmp + 6);
+      *tmp = '\0';
+    }
+  }
+
   /*
    * extract path and file components
    */
-  path = pathcopy = safestrdup(request->path);
-
   if (pathcopy[strlen(pathcopy)] == '/') {
     file = NULL;
   } else if ((file = strrchr(pathcopy, '/')) == NULL) {
@@ -344,6 +356,16 @@ connect_ftp(struct conn_s *connptr, struct request_s *request, char *errbuf,
       goto COMMON_ERROR_QUIT;
     }
     connptr->ftp_path = safestrdup(path);
+  }
+
+  /* 
+   * lftp sends "HEAD xyz HTTP/x.x" for "CWD xyz". If so,
+   * send a QUIT to the server and simply return 0.
+   */
+  if (strcmp(request->method, "HEAD") == 0) {
+    send_and_receive(fd, "QUIT\r\n", buf, sizeof(buf));
+    safefree(pathcopy);
+    return 0;
   }
 
   /*
@@ -388,6 +410,11 @@ connect_ftp(struct conn_s *connptr, struct request_s *request, char *errbuf,
    * directory listing.
    */
   if (file) {
+    if (type) {
+      snprintf(buf, sizeof(buf), "TYPE %c\r\n", toupper(type));
+      if ((code = send_and_receive(fd, buf, buf, sizeof(buf))) == -1)
+	goto COMMON_ERROR_QUIT;
+    }
     snprintf(buf, sizeof(buf), "RETR %s\r\n", file);
     DEBUG2("sending RETR %s", file);
     if ((code = send_and_receive(fd, buf, buf, sizeof(buf))) == -1)
@@ -419,6 +446,7 @@ connect_ftp(struct conn_s *connptr, struct request_s *request, char *errbuf,
     connptr->ftp_isdir = TRUE;
   }
 
+  safefree(pathcopy);
   connptr->server_cfd = fd;
   return connptr->server_fd;
 
