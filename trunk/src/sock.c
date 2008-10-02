@@ -106,10 +106,8 @@ int opensock(char *ip_addr, uint16_t port, char *errbuf, size_t errbuflen)
   /* Lookup and return the address if possible */
   ret = lookup_domain(&port_info.sin_addr, ip_addr, errbuf, errbuflen);
 
-  if (ret < 0) {
-    log_message(LOG_ERR, "opensock: %s", errbuf);
-    return -1;
-  }
+  if (ret < 0)
+    goto COMMON_ERROR;
 
   port_info.sin_port = htons(port);
 
@@ -163,23 +161,27 @@ int opensock(char *ip_addr, uint16_t port, char *errbuf, size_t errbuflen)
       case -1:
 	snprintf(errbuf, errbuflen, "socket() error \"%s\".", strerror(errno));
 	goto COMMON_ERROR;
+      case 0:
+	break;
       default:
 	if (FD_ISSET(sock_fd, &fds)) {
 	  socket_blocking(sock_fd);
 	  return sock_fd;
 	}
-      case 0:
-	retry++;
-	close(sock_fd);
-	continue;
+	break;
       }
     }
+    close(sock_fd);
+    sock_fd = -1;
+    retry++;
   }
   snprintf(errbuf, errbuflen, "connect() timeout.");
 
 COMMON_ERROR:
 
-  close(sock_fd);
+  errbuf[errbuflen - 1] = '\0';
+  if (sock_fd != -1)
+    close(sock_fd);
   log_message(LOG_ERR, "opensock: %s", errbuf);
   return -1;
 }
