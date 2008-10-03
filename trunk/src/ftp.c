@@ -90,7 +90,10 @@ static int fromhex(unsigned char c)
   return -1;
 }
 
-
+/* 
+ * decode the url encoded path
+ * Note: The original string gets overwritten!
+ */
 static void urldecode(char *path)
 {
   size_t i;
@@ -574,8 +577,20 @@ static int scan_direntry(char *buf, size_t len, struct ftpinfo_s *info)
       continue;
 
     info->size = strtoull(tokens[i - 1], &end, 10);
-    if (end == tokens[i - 1])
-      continue;
+    if (end == tokens[i - 1]) {
+      /*
+       * extra hack for listings where group and filesize touches each other
+       * i.e. ftp://ftp.cisco.com/pub/isgtech/
+       *
+       * -rw-r--r--    1 ftpadmin ftpadmin556818432 Dec 12  2007 DMS-4.1.0.40.iso
+       */
+      char *tmp = tokens[i - 1];
+      while (!isdigit(*tmp))
+	tmp++;
+      info->size = strtoull(tmp, &end, 10);
+      if (end == tmp)
+	continue;
+    }
 
     snprintf(timebuf, sizeof(timebuf),
 	     "%s %2s %5s", tokens[i], tokens[i + 1], tokens[i + 2]);
