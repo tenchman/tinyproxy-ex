@@ -261,7 +261,7 @@ connect_ftp(struct conn_s *connptr, struct request_s *request, char *errbuf,
 {
   char *tmp, buf[4096];
   int fd, code, port = 0;
-  char *path, *file, *pathcopy, host[INET_ADDRSTRLEN];
+  char *path, *file, *pathcopy = NULL, host[INET_ADDRSTRLEN];
   long int size;
   char type = 0;
 
