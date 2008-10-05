@@ -416,11 +416,13 @@ connect_ftp(struct conn_s *connptr, struct request_s *request, char *errbuf,
    * directory listing.
    */
   if (file) {
-    if (type) {
-      snprintf(buf, sizeof(buf), "TYPE %c\r\n", toupper(type));
-      if ((code = send_and_receive(fd, buf, buf, sizeof(buf))) == -1)
-	goto COMMON_ERROR_QUIT;
-    }
+
+    if (!type)
+      type = 'i';
+    snprintf(buf, sizeof(buf), "TYPE %c\r\n", toupper(type));
+    if ((code = send_and_receive(fd, buf, buf, sizeof(buf))) == -1)
+      goto COMMON_ERROR_QUIT;
+
     snprintf(buf, sizeof(buf), "RETR %s\r\n", file);
     DEBUG2("sending RETR %s", file);
     if ((code = send_and_receive(fd, buf, buf, sizeof(buf))) == -1)
