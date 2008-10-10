@@ -1414,16 +1414,18 @@ static void relay_connection(struct conn_s *connptr)
   }
 #ifdef FTP_SUPPORT
   /*
-   * Try to send QUIT to the ftp server
+   * Try to close the FTP session gracefully.
    */
 
   if (!UPSTREAM_CONFIGURED() && connptr->method == METH_FTP) {
     char buf[1024];
     int code;
+    /* read the answer of our RECV/LIST command */
     code = send_and_receive(connptr->server_cfd, NULL, buf, 1024);
     if (code != -1) {
       connptr->statuscode = code;
-      send_and_receive(connptr->server_cfd, "QUIT\r\n", NULL, 0);
+      /* time to say goodbye */
+      send_and_receive(connptr->server_cfd, "QUIT\r\n", buf, 1024);
     }
   }
 #endif

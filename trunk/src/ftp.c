@@ -16,6 +16,9 @@
 #include "tinyproxy-ex.h"
 #ifdef FTP_SUPPORT
 #include <sys/uio.h>		/* writev */
+#ifdef HAVE_ALLOCA_H
+#include <alloca.h>
+#endif
 #include "reqs.h"
 #include "conns.h"
 #include "utils.h"
@@ -113,17 +116,12 @@ static void urldecode(char *path)
   *decoded = '\0';
 }
 
-static char *urlencode(char *name)
+static char *urlencode(char *dst, char *name)
 {
-  unsigned char *dst, *buf, *src = (unsigned char *) name;
+  unsigned char *buf = (unsigned char *) dst;
+  unsigned char *src = (unsigned char *) name;
   const char rfc1738unsafe[] = "<>\"#%{}|\\^~[]`' ";
   const char rfc1738reserved[] = ";/?:@=&";
-
-  /* 
-   * assume the worst case, all characters needs to be
-   * encoded
-   */
-  dst = buf = safemalloc(strlen(name) * 3 + 1);
 
   if (!dst)
     return NULL;
@@ -286,7 +284,8 @@ connect_ftp(struct conn_s *connptr, struct request_s *request, char *errbuf,
    * try to login as user 'ftp' with password 'user@'
    */
 
-  if ((code = send_and_receive(fd, "USER ftp\r\n", buf, sizeof(buf))) == -1)
+  if ((code =
+       send_and_receive(fd, "USER anonymous\r\n", buf, sizeof(buf))) == -1)
     goto COMMON_ERROR_QUIT;
 
   switch (code) {
@@ -476,10 +475,21 @@ static ssize_t fmt_direntry(char *buf, size_t buflen, struct ftpinfo_s *info)
   const char dots[32] = " . . . . . . . . . . . . . . . ";
   int nlen = 32 - strlen(info->name);
   char displayname[36];
-  char *safename = urlencode(info->name);
+  char *safename;
   const char outfmt[] =
       "<a href=\"%s%s%s\"><img border=\"0\" src=\"http://tinyproxy-ex.intern/%c.png\" alt=\"[%c]\">"
       "</a> <a href=\"%s%s%s\">%s</a>%.*s %s %15llu   %s\r\n";
+
+  /* 
+   * assume the worst case, all characters needs to be
+   * encoded
+   */
+#ifdef HAVE_ALLOCA
+  safename = alloca(strlen(info->name) * 3 + 1);
+#else
+  safename = malloc(strlen(info->name) * 3 + 1);
+#endif
+  urlencode(safename, info->name);
 
   /* crop the displayed name */
   strncpy(displayname, info->name, 31);
@@ -496,7 +506,9 @@ static ssize_t fmt_direntry(char *buf, size_t buflen, struct ftpinfo_s *info)
 		  dots + (32 - nlen),
 		  info->date, info->size, info->link ? info->link : "");
 
+#ifndef HAVE_ALLOCA
   safefree(safename);
+#endif
   return nlen;
 }
 
@@ -528,16 +540,20 @@ ssize_t add_ftpdir_header(struct conn_s * connptr)
 /*
  * TODO: Easily Parsed LIST Format - http://cr.yp.to/ftp/list/eplf.html
  *
- * Some ideas borowed from squid's ftp implementation
+ * Some (well most) ideas borowed from squid's ftp implementation
  */
 static int scan_direntry(char *buf, size_t len, struct ftpinfo_s *info)
 {
   char *t = NULL, *name;
+#ifdef HAVE_ALLOCA
   char *copy = safemalloc(len + 1);
+#else
+  char *copy = alloca(len + 1);
+#endif
   char *tokens[MAX_TOKENS];
   int i, n_tokens = 0, retval = -1;
   struct tm tm;
-  char timebuf[32], *end;
+  char tmp[64], *end;
 
   memset(tokens, 0, sizeof(tokens));
   strncpy(copy, buf, len);
@@ -545,7 +561,15 @@ static int scan_direntry(char *buf, size_t len, struct ftpinfo_s *info)
 
   for (t = strtok(copy, " \t\n\r"); t && n_tokens < MAX_TOKENS;
        t = strtok(NULL, " \t\n\r"))
+#ifdef HAVE_ALLOCA
+  {
+    tokens[n_tokens] = alloca(strlen(t) + 1);
+    strcpy(tokens[n_tokens], t);
+    n_tokens++;
+  }
+#else
     tokens[n_tokens++] = safestrdup(t);
+#endif
 
   if (n_tokens < 4 && tokens[0][0] != '+') {
     /* return -2 to ignore this line */
@@ -566,7 +590,7 @@ static int scan_direntry(char *buf, size_t len, struct ftpinfo_s *info)
    */
   for (i = 3; i < n_tokens - 2; i++) {
 
-    snprintf(timebuf, sizeof(timebuf),
+    snprintf(tmp, sizeof(tmp),
 	     "%s %s %s", tokens[i], tokens[i + 1], tokens[i + 2]);
 
     /*
@@ -574,8 +598,7 @@ static int scan_direntry(char *buf, size_t len, struct ftpinfo_s *info)
      *      'Apr 17  2005'
      *      'Jun 25 00:37'
      */
-    if (!strptime(timebuf, "%b %d %Y", &tm) &&
-	!strptime(timebuf, "%b %d %H:%M", &tm))
+    if (!strptime(tmp, "%b %d %Y", &tm) && !strptime(tmp, "%b %d %H:%M", &tm))
       continue;
 
     info->size = strtoull(tokens[i - 1], &end, 10);
@@ -594,19 +617,19 @@ static int scan_direntry(char *buf, size_t len, struct ftpinfo_s *info)
 	continue;
     }
 
-    snprintf(timebuf, sizeof(timebuf),
+    snprintf(tmp, sizeof(tmp),
 	     "%s %2s %5s", tokens[i], tokens[i + 1], tokens[i + 2]);
 
-    if (!strstr(copy, timebuf))
-      snprintf(timebuf, sizeof(timebuf), "%s %2s %-5s",
+    if (!strstr(copy, tmp))
+      snprintf(tmp, sizeof(tmp), "%s %2s %-5s",
 	       tokens[i], tokens[i + 1], tokens[i + 2]);
 
     info->type = *tokens[0];
-    info->date = safestrdup(timebuf);
+    info->date = safestrdup(tmp);
     info->link = NULL;
 
-    if ((name = strstr(copy, timebuf))) {
-      name += strlen(timebuf);
+    if ((name = strstr(copy, tmp))) {
+      name += strlen(tmp);
       while (strchr(" \t\n\r", *name))
 	name++;
       info->name = safestrdup(name);
@@ -628,25 +651,39 @@ static int scan_direntry(char *buf, size_t len, struct ftpinfo_s *info)
    */
   if (strptime(tokens[0], "%m-%d-%y", &tm)
       && strptime(tokens[1], "%H:%M%p", &tm)) {
-    snprintf(timebuf, sizeof(timebuf), "%s %s", tokens[0], tokens[1]);
-    info->date = safestrdup(timebuf);
-    info->name = safestrdup(tokens[3]);
+    snprintf(tmp, sizeof(tmp), "%s %s", tokens[0], tokens[1]);
+    info->date = safestrdup(tmp);
     info->link = NULL;
+
     if (strcasecmp(tokens[2], "<dir>") == 0) {
       info->type = 'd';
       info->size = 0;
+      if ((name = strstr(copy, tokens[2])))
+	name += strlen(tokens[2]);
     } else {
       info->type = '-';
       info->size = strtoull(tokens[2], NULL, 10);
+      snprintf(tmp, sizeof(tmp), " %s %s", tokens[2], tokens[3]);
+      if ((name = strstr(copy, tmp)))
+	name += strlen(tokens[2]) + 2;
+    }
+
+    if (name) {
+      while (isspace(*name))
+	name++;
+      info->name = safestrdup(name);
+    } else {
+      info->name = safestrdup(tokens[3]);
     }
     retval = 0;
-    goto COMMON_EXIT;
   }
 
 COMMON_EXIT:
+#ifndef HAVE_ALLOCA
   for (i = 0; i < n_tokens; i++)
     safefree(tokens[i]);
   safefree(copy);
+#endif
   return retval;
 }
 

@@ -211,6 +211,7 @@ int main(int argc, char **argv)
     exit(EX_SOFTWARE);
   }
   yyparse();
+  fclose(yyin);
 
   /* Open the log file if not using syslog */
   if (config.syslog == FALSE) {
