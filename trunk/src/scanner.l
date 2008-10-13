@@ -150,7 +150,7 @@ word		[^ \#'"\(\)\{\}\\;\n\t,|\.]
 int
 check_reserved_words(char *token)
 {
-	int i;
+	size_t i;
 
 	for (i = 0; i < (sizeof(keywords) / sizeof(struct keyword)); i++) {
 	        if (strcasecmp(keywords[i].kw_name, token) == 0) {
