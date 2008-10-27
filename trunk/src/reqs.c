@@ -710,7 +710,7 @@ static struct request_s *process_request(struct conn_s *connptr,
   /*
    * Filter restricted domains/urls, skip local requests
    */
-  if (config.filter && connptr->local_request == FALSE) {
+  if (config.filter && connptr->local_request == FALSE && connptr->aclname) {
     char *status = NULL;
 
     if (config.filter_url)

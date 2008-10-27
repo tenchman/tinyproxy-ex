@@ -42,7 +42,7 @@ static in_addr_t make_netmask(int netmask_num)
 {
   assert(netmask_num >= 0 && netmask_num <= 32);
 
-  return htonl(~((1 << (32 - netmask_num)) - 1));
+  return netmask_num ? htonl(~((1 << (32 - netmask_num)) - 1)) : 0;
 }
 
 /*
@@ -150,7 +150,7 @@ int insert_extacl(char *aclname, acl_type_t acltype, char *location)
     rev_acl_ptr = &acl_ptr->next;
     acl_ptr = acl_ptr->next;
   }
-  new_acl_ptr = safemalloc(sizeof(struct extacl_s));
+  new_acl_ptr = safecalloc(1, sizeof(struct extacl_s));
   if (!new_acl_ptr) {
     return -1;
   }
