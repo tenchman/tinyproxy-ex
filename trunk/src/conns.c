@@ -85,6 +85,7 @@ struct conn_s *initialize_conn(int client_fd, const char *ipaddr,
   connptr->client_string_addr = safestrdup(string_addr);
 
   connptr->upstream_proxy = NULL;
+  connptr->local_request = 0;
 
   update_stats(STAT_OPEN);
 
