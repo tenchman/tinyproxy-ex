@@ -325,8 +325,10 @@ void filter_destroy(void)
     for (p = q = fl; p; p = q) {
       struct filter_rulelist *r, *s;
       for (r = s = p->rules; r; r = s) {
-	regfree(r->cpat);
-	safefree(r->cpat);
+	if (r->cpat) {
+	  regfree(r->cpat);
+	  safefree(r->cpat);
+	}
 	safefree(r->pat);
 	s = r->next;
 	safefree(r);
