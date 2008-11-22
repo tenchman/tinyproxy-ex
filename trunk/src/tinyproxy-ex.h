@@ -32,8 +32,6 @@
  * structure still needs to be defined.
  */
 
-#define FTP_SUPPORT 1
-
 typedef enum {
   FILTER_ALLOW,
   FILTER_DENY,
