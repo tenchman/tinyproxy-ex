@@ -41,6 +41,7 @@
 #include "utils.h"
 #include "vector.h"
 #include "ftp.h"
+#include "proctitle.h"
 
 /*
  * Maximum length of a HTTP line
@@ -48,7 +49,7 @@
 #define HTTP_LINE_LENGTH (MAXBUFFSIZE / 6)
 
 /*
- * Port constants for HTTP (80) and SSL (443)
+ * Port constants for FTP (21) HTTP (80) and SSL (443)
  */
 #define FTP_PORT 21
 #define HTTP_PORT 80
@@ -1639,6 +1640,8 @@ void handle_connection(int fd)
     if (connptr->method != METH_CONNECT)
       establish_http_connection(connptr, request);
   }
+
+  proctitle(request->host);
 
 send_error:
   free_request_struct(request);

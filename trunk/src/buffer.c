@@ -27,6 +27,10 @@
 #include "buffer.h"
 #include "heap.h"
 #include "log.h"
+#ifdef FTP_SUPPORT
+#include "reqs.h"
+#include "ftp.h"
+#endif
 
 #define BUFFER_HEAD(x) (x)->head
 #define BUFFER_TAIL(x) (x)->tail

@@ -35,6 +35,7 @@
 #include "sock.h"
 #include "stats.h"
 #include "utils.h"
+#include "proctitle.h"
 
 void takesig(int sig);
 
@@ -94,6 +95,7 @@ static void display_license(void)
   Copyright 1998-2002  Robert James Kaes (rjkaes@users.sourceforge.net)\n\
   Copyright 1999       George Talusan (gstalusan@uwaterloo.ca)\n\
   Copyright 2000       Chris Lightfoot (chris@ex-parrot.com)\n\
+  Copyright 2008       Gernot Tenchio (gernot@tenchio.de)\n\
 \n\
   This program is free software; you can redistribute it and/or modify\n\
   it under the terms of the GNU General Public License as published by\n\
@@ -140,6 +142,9 @@ Options:\n\
 #endif				/* TRANSPARENT_PROXY */
 #ifdef FTP_SUPPORT
   printf("    FTP over HTTP Support\n");
+#endif
+#ifdef PROCTITLE_SUPPORT
+  printf("    Proctitle Support\n");
 #endif
 }
 
@@ -351,6 +356,8 @@ int main(int argc, char **argv)
   } else {
     log_message(LOG_WARNING, "Not running as root, so not changing UID/GID.");
   }
+
+  initproctitle(argc, argv);
 
   if (child_pool_create() < 0) {
     fprintf(stderr, "%s: Could not create the pool of children.", argv[0]);

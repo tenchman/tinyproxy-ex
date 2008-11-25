@@ -26,6 +26,7 @@
 #include "reqs.h"
 #include "sock.h"
 #include "utils.h"
+#include "proctitle.h"
 
 static int listenfd;
 static socklen_t addrlen;
@@ -155,6 +156,7 @@ short int child_configure(child_config_t type, int val)
 static void child_main(struct child_s *ptr)
 {
   int connfd;
+  char procstr[128];
   struct sockaddr *cliaddr;
   socklen_t clilen;
 
@@ -168,7 +170,8 @@ static void child_main(struct child_s *ptr)
 
   while (!config.quit) {
     ptr->status = T_WAITING;
-
+    snprintf(procstr, sizeof(procstr), "idle (%d)", ptr->connects);
+    proctitle(procstr);
     clilen = addrlen;
 
     connfd = accept(listenfd, cliaddr, &clilen);
@@ -195,6 +198,7 @@ static void child_main(struct child_s *ptr)
       continue;
     }
 
+    proctitle("running");
     ptr->status = T_CONNECTED;
 
     SERVER_DEC();
@@ -266,7 +270,7 @@ static int child_make(struct child_s *ptr)
  */
 short int child_pool_create(void)
 {
-  unsigned int i;
+  int i;
 
   /*
    * Make sure the number of MaxClients is not zero, since this

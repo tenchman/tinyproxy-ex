@@ -21,6 +21,7 @@ sbin_PROGRAMS = tinyproxy
 tinyproxy_SOURCES = \
 	acl.c acl.h \
 	anonymous.c anonymous.h \
+	proctitle.c proctitle.h \
 	buffer.c buffer.h \
 	child.c child.h \
 	common.h \
@@ -47,6 +48,11 @@ EXTRA_DIST = gnuregex.c gnuregex.h
 EXTRA_tinyproxy_SOURCES = filter.c filter.h grammar.h
 tinyproxy_DEPENDENCIES = @ADDITIONAL_OBJECTS@
 tinyproxy_LDADD = @ADDITIONAL_OBJECTS@
+
+.c.o:
+	@echo "  Compiling: $*.c"
+	@$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
+	@mv -f $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
 
 scanner.c: scanner.l grammar.h
 	$(LEX) $(LEX_FLAGS) $(LFLAGS) -i $< && mv $(LEX_OUTPUT_ROOT).c $@
