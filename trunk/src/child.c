@@ -156,7 +156,6 @@ short int child_configure(child_config_t type, int val)
 static void child_main(struct child_s *ptr)
 {
   int connfd;
-  char procstr[128];
   struct sockaddr *cliaddr;
   socklen_t clilen;
 
@@ -170,8 +169,7 @@ static void child_main(struct child_s *ptr)
 
   while (!config.quit) {
     ptr->status = T_WAITING;
-    snprintf(procstr, sizeof(procstr), "idle (%d)", ptr->connects);
-    proctitle(procstr);
+    proctitle("idle (%d)", ptr->connects);
     clilen = addrlen;
 
     connfd = accept(listenfd, cliaddr, &clilen);
@@ -198,7 +196,7 @@ static void child_main(struct child_s *ptr)
       continue;
     }
 
-    proctitle("running");
+    proctitle("%s", "running");
     ptr->status = T_CONNECTED;
 
     SERVER_DEC();

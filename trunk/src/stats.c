@@ -61,7 +61,7 @@ int add_stat_variable(struct conn_s *connptr, char *key, STAT_NUM_TYPE value)
 {
   char buf[128];
   snprintf(buf, sizeof(buf), "%lu", value);
-  add_error_variable(connptr, key, buf);
+  return add_error_variable(connptr, key, buf);
 }
 
 /*

@@ -1173,31 +1173,41 @@ static int process_server_headers(struct conn_s *connptr)
   char *data;
   void *header;
   ssize_t len;
+  size_t num;
   int i;
   int ret;
 
   /* FIXME: Remember to handle a "simple_req" type */
 
   /* Get the response line from the remote server. */
-retry:
   len = readline(connptr->server_fd, &response_line);
   if (len <= 0)
     return -1;
 
-  /*
-   * Strip the new line and character return from the string.
-   */
-  if (chomp(response_line, len) == len) {
-    /*
-     * If the number of characters removed is the same as the
-     * length then it was a blank line. Free the buffer and
-     * try again (since we're looking for a request line.)
-     */
+  /* The first response line should look like this:
+   *
+   * HTTP/1.0 200 OK or similar
+   *
+   * It turns out, it is bullshit to retry after an invalid response.
+   * Look for a space in the response line and if it does not exists,
+   * return -1, period.
+   **/
+  if (!(data = strchr(response_line, ' '))
+      || !(connptr->statuscode = atoi(data))) {
     safefree(response_line);
-    goto retry;
+    return -1;
   }
 
-  sscanf(response_line, "%[^ ] %d", data, &connptr->statuscode);
+  /* PARANOIA alarm!
+   * even broken servers should terminate the response line with
+   * '\r' or '\n'. Bail out if not.
+   **/
+  if ((num = strcspn(response_line, "\r\n")) == 0) {
+    safefree(response_line);
+    return -1;
+  }
+
+  response_line[num] = '\0';
 
   hashofheaders = hashmap_create(HEADER_BUCKETS);
   if (!hashofheaders) {
@@ -1641,7 +1651,7 @@ void handle_connection(int fd)
       establish_http_connection(connptr, request);
   }
 
-  proctitle(request->host);
+  proctitle("%s -> %s", peer_ipaddr, request->host);
 
 send_error:
   free_request_struct(request);

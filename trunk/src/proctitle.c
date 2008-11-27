@@ -5,6 +5,7 @@
 #include <string.h>
 #include <stdarg.h>
 #include <libgen.h>
+#include <stdarg.h>
 #include <proctitle.h>
 
 #ifdef PROCTITLE_SUPPORT
@@ -71,25 +72,21 @@ void initproctitle(int argc, char **argv)
  * We name it simply proctitle to not conflict with the real BSDish
  * setproctitle(3) function.
 **/
-void proctitle(const char *txt)
+void proctitle(const char *format, ...)
 {
   size_t i;
   char buf[SPT_BUFSIZE];
-  size_t textlen = strlen(txt);
+  va_list ap;
 
   if (!argv0)
     return;
 
-  /* cut the text to the space available */
-  if (textlen > available) {
-    textlen = available;
-  }
+  i = snprintf(buf, SPT_BUFSIZE, "%s: ", progname);
 
-  memcpy(buf, progname, prognamelen);
-  memcpy(buf + prognamelen, ": ", 2);
-  memcpy(buf + prognamelen + 2, txt, textlen);
+  va_start(ap, format);
+  i += vsnprintf(buf + i, SPT_BUFSIZE - i, format, ap);
+  va_end(ap);
 
-  i = prognamelen + textlen + 2;
   if (i > argv_len - 2)
     i = argv_len - 2;
   buf[i] = '\0';

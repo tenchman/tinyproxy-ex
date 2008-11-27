@@ -137,7 +137,7 @@ static struct filter_rulelist *filter_addrule(const char *pat,
   if (p) {
     p->type = type;
     if (!(p->pat = safestrdup(pat))) {
-      free(p);
+      safefree(p);
       p = NULL;
     }
   }
