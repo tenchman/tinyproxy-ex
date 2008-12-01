@@ -153,7 +153,11 @@ ssize_t readline(int fd, char **whole_buffer)
 
   whole_buffer_len = 0;
   for (;;) {
-    ret = recv(fd, buffer, SEGMENT_LEN, MSG_PEEK);
+
+    while ((ret = recv(fd, buffer, SEGMENT_LEN, MSG_PEEK | MSG_DONTWAIT)) < 0
+	   && errno == EAGAIN)
+      usleep(200000);
+
     if (ret <= 0)
       goto CLEANUP;
 
@@ -180,7 +184,11 @@ ssize_t readline(int fd, char **whole_buffer)
       goto CLEANUP;
     }
 
-    recv(fd, line_ptr->data, diff, 0);
+    ret = recv(fd, line_ptr->data, diff, 0);
+    /* to be safe */
+    if (ret <= 0)
+      goto CLEANUP;
+
     line_ptr->len = diff;
 
     if (ptr) {
