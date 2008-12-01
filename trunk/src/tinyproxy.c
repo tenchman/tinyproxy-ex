@@ -295,13 +295,6 @@ int main(int argc, char **argv)
   if (godaemon == TRUE)
     makedaemon();
 
-  if (config.pidpath) {
-    if (pidfile_create(config.pidpath) < 0) {
-      fprintf(stderr, "%s: Could not create PID file.\n", argv[0]);
-      exit(EX_OSERR);
-    }
-  }
-
   if (set_signal_handler(SIGPIPE, SIG_IGN) == SIG_ERR) {
     fprintf(stderr, "%s: Could not set the \"SIGPIPE\" signal.\n", argv[0]);
     exit(EX_OSERR);
@@ -355,6 +348,17 @@ int main(int argc, char **argv)
     }
   } else {
     log_message(LOG_WARNING, "Not running as root, so not changing UID/GID.");
+  }
+
+  /*
+   * create the pidfile AFTER changing to a different user in order to be
+   * able to remove it on exit.
+   */
+  if (config.pidpath) {
+    if (pidfile_create(config.pidpath) < 0) {
+      fprintf(stderr, "%s: Could not create PID file.\n", argv[0]);
+      exit(EX_OSERR);
+    }
   }
 
   initproctitle(argc, argv);
