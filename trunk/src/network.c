@@ -23,6 +23,7 @@
 
 #include "heap.h"
 #include "network.h"
+#include "log.h"
 
 /*
  * Write the buffer to the socket. If an EINTR occurs, pick up and try
@@ -134,6 +135,7 @@ ssize_t readline(int fd, char **whole_buffer)
   ssize_t whole_buffer_len;
   char buffer[SEGMENT_LEN];
   char *ptr;
+  time_t starttime;
 
   ssize_t ret;
   ssize_t diff;
@@ -154,9 +156,17 @@ ssize_t readline(int fd, char **whole_buffer)
   whole_buffer_len = 0;
   for (;;) {
 
+    starttime = time(NULL);
     while ((ret = recv(fd, buffer, SEGMENT_LEN, MSG_PEEK | MSG_DONTWAIT)) < 0
-	   && errno == EAGAIN)
+	   && errno == EAGAIN) {
+
+      if ((unsigned int) (starttime - time(NULL)) > config.idletimeout) {
+	log_message(LOG_INFO,
+		    "Idle Timeout in readline %u.", config.idletimeout);
+	goto CLEANUP;
+      }
       usleep(200000);
+    }
 
     if (ret <= 0)
       goto CLEANUP;
