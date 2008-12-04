@@ -160,7 +160,7 @@ ssize_t readline(int fd, char **whole_buffer)
     while ((ret = recv(fd, buffer, SEGMENT_LEN, MSG_PEEK | MSG_DONTWAIT)) < 0
 	   && errno == EAGAIN) {
 
-      if ((unsigned int) (starttime - time(NULL)) > config.idletimeout) {
+      if ((long) (time(NULL) - starttime) > (long) config.idletimeout) {
 	log_message(LOG_INFO,
 		    "Idle Timeout in readline %u.", config.idletimeout);
 	goto CLEANUP;
