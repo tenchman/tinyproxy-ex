@@ -68,7 +68,10 @@ void takesig(int sig)
     break;
 
   case SIGCHLD:
-    while ((pid = waitpid(-1, &status, WNOHANG)) > 0);
+    while ((pid = waitpid(-1, &status, WNOHANG)) > 0) {
+      if (child_mark_empty(pid) == pid)
+	log_message(LOG_ERR, "child %d crashed, parachute deployed.", pid);
+    }
     break;
   }
 

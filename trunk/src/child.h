@@ -27,6 +27,7 @@ typedef enum {
 } child_config_t;
 
 extern short int child_pool_create(void);
+extern int child_mark_empty(pid_t pid);
 extern int child_listening_sock(uint16_t port);
 extern void child_close_sock(void);
 extern void child_main_loop(void);

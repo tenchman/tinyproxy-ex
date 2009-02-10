@@ -151,6 +151,23 @@ short int child_configure(child_config_t type, int val)
 }
 
 /*
+ * Search for a child with the given pid and mark it
+ * as empty after a crash.
+**/
+int child_mark_empty(pid_t pid)
+{
+  int i;
+  for (i = 0; i != child_config.maxclients; i++) {
+    if (child_ptr[i].tid == pid) {
+      child_ptr[i].tid = -1;
+      child_ptr[i].status = T_EMPTY;
+      return pid;
+    }
+  }
+  return 0;
+}
+
+/*
  * This is the main (per child) loop.
  */
 static void child_main(struct child_s *ptr)
