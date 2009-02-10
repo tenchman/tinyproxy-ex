@@ -1539,7 +1539,7 @@ void handle_connection(int fd)
   char peer_ipaddr[PEER_IP_LENGTH];
   char peer_string[PEER_STRING_LENGTH];
   char errbuf[4096];
-  char *aclname, *tmp;
+  char *aclname = NULL, *tmp;
 
   gettimeofday(&tv_s, NULL);
 
