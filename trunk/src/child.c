@@ -161,6 +161,7 @@ int child_mark_empty(pid_t pid)
     if (child_ptr[i].tid == pid) {
       child_ptr[i].tid = -1;
       child_ptr[i].status = T_EMPTY;
+      child_ptr[i].connects = 0;
       return pid;
     }
   }
