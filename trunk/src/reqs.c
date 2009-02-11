@@ -1319,10 +1319,20 @@ static void relay_connection(struct conn_s *connptr)
 #endif
 
   for (;;) {
+    long tdiff = (long) last_access - (long) time(NULL);
+
+    /* prevent a race condition between two time() calls */
+    if (tdiff >= (long) config.idletimeout) {
+      log_message(LOG_INFO,
+		  "Idle Timeout (after select) as %li > %u.",
+		  tdiff, config.idletimeout);
+      return;
+    }
+
     FD_ZERO(&rset);
     FD_ZERO(&wset);
 
-    tv.tv_sec = config.idletimeout - ((long) last_access - (long) time(NULL));
+    tv.tv_sec = (long) config.idletimeout - tdiff;
     tv.tv_usec = 0;
 
     if (buffer_size(connptr->sbuffer) > 0)
@@ -1337,16 +1347,7 @@ static void relay_connection(struct conn_s *connptr)
     ret = select(maxfd, &rset, &wset, NULL, &tv);
 
     if (ret == 0) {
-      long tdiff;
-      tdiff = (long) last_access - (long) time(NULL);
-      if (tdiff > (long) config.idletimeout) {
-	log_message(LOG_INFO,
-		    "Idle Timeout (after select) as %li > %u.",
-		    tdiff, config.idletimeout);
-	return;
-      } else {
-	continue;
-      }
+      continue;
     } else if (ret < 0) {
       log_message(LOG_ERR,
 		  "relay_connection: select() error \"%s\". Closing connection (client_fd:%d, server_fd:%d)",
