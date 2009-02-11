@@ -46,7 +46,7 @@ struct conn_s *initialize_conn(int client_fd, const char *ipaddr,
   /*
    * Allocate the space for the conn_s structure itself.
    */
-  connptr = safemalloc(sizeof(struct conn_s));
+  connptr = safecalloc(1, sizeof(struct conn_s));
   if (!connptr)
     goto error_exit;
 
@@ -54,38 +54,22 @@ struct conn_s *initialize_conn(int client_fd, const char *ipaddr,
   connptr->server_fd = -1;
 #ifdef FTP_SUPPORT
   connptr->server_cfd = -1;
-  connptr->offset = 0;
-  connptr->ftp_path = NULL;
-  connptr->ftp_basedir = NULL;
-  connptr->ftp_greeting = NULL;
   connptr->ftp_isdir = FALSE;
 #endif
   connptr->cbuffer = cbuffer;
   connptr->sbuffer = sbuffer;
 
-  connptr->request_line = NULL;
-
   /* These store any error strings */
-  connptr->error_variables = NULL;
-  connptr->error_variable_count = 0;
-  connptr->error_string = NULL;
   connptr->error_number = -1;
 
   connptr->method = METH_UNKNOWN;
   connptr->show_stats = FALSE;
 
-  connptr->server.major = connptr->server.minor = 0;
-  connptr->client.major = connptr->client.minor = 0;
-
   /* There is _no_ content length initially */
   connptr->server.content_length = connptr->client.content_length = -1;
-  connptr->server.processed = connptr->client.processed = 0;
 
   connptr->client_ip_addr = safestrdup(ipaddr);
   connptr->client_string_addr = safestrdup(string_addr);
-
-  connptr->upstream_proxy = NULL;
-  connptr->local_request = 0;
 
   update_stats(STAT_OPEN);
 
