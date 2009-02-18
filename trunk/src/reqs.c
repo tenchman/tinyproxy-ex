@@ -1567,13 +1567,12 @@ void handle_connection(int fd)
 
   connptr->aclname = aclname;
 
+  /*
+   * If the client closes the connection before we can read any data, it
+   * doesn't make much sense to send a error page. :-)
+   */
   if (read_request_line(connptr) < 0) {
     update_stats(STAT_BADCONN);
-    indicate_http_error(connptr, 408, "Timeout",
-			"detail",
-			"Server timeout waiting for the HTTP request from the client.",
-			NULL);
-    send_http_error_message(connptr);
     goto COMMON_EXIT;
   }
 
@@ -1735,7 +1734,7 @@ COMMON_EXIT:
      * and copy everything found after ' HTTP/' to the position
      * of the former arguments.
      **/
-    if ((tmp = strchr(connptr->request_line, '?'))) {
+    if (connptr->request_line && (tmp = strchr(connptr->request_line, '?'))) {
       char *proto = strrchr(tmp, '/');
       if (proto && proto > tmp + 6 && strncmp(proto - 5, " HTTP/", 6) == 0)	/* paranoia */
 	strcpy(tmp + 1, proto - 5);

@@ -254,6 +254,7 @@ static void child_main(struct child_s *ptr)
   }
 
   ptr->status = T_EMPTY;
+  ptr->tid = -1;
 
   safefree(cliaddr);
   exit(0);
