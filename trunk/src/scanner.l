@@ -29,7 +29,6 @@ struct keyword {
 
 static struct keyword keywords[] = {
         /* statements */
-        { "port",		 KW_PORT },
 	{ "logfile",		 KW_LOGFILE },
 	{ "syslog",		 KW_SYSLOG },
 	{ "reverselookup",	 KW_REVERSELOOKUP },

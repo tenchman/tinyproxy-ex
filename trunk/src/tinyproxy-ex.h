@@ -54,13 +54,11 @@ struct config_s {
   unsigned int syslog:1;
   unsigned int quit:1;
   unsigned reverselookup:1;
-  int port;
   int connecttimeout;
   int connectretries;
   char *stathost;
   char *username;
   char *group;
-  char *ipAddr;
 #ifdef FILTER_ENABLE
   /* path to the ofcd unix domain socket */
   char *ofcdsocket;

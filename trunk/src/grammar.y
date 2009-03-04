@@ -28,6 +28,7 @@
 #include "htmlerror.h"
 #include "log.h"
 #include "reqs.h"
+#include "sock.h"
 
 void yyerror(char *s);
 int yylex(void);
@@ -101,8 +102,7 @@ line
 	;
 
 statement
-        : KW_PORT NUMBER		{ config.port = $2; }
-	| KW_TIMEOUT NUMBER		{ config.idletimeout = $2; }
+	: KW_TIMEOUT NUMBER		{ config.idletimeout = $2; }
 	| KW_REVERSELOOKUP yesno	{ config.reverselookup = $2; }
 	| KW_SYSLOG yesno
 	  {
@@ -223,10 +223,10 @@ statement
                   log_message(LOG_WARNING, "Upstream proxy support was not compiled in.");
 #endif
 	  }
-	| KW_LISTEN NUMERIC_ADDRESS
+	| KW_LISTEN NUMERIC_ADDRESS ':' NUMBER
           {
 		  log_message(LOG_INFO, "Establishing listening socket on IP %s", $2);
-                  config.ipAddr = $2;
+                  add_listener($2, $4);
           }
         | KW_LOGLEVEL loglevels         { set_log_level($2); }
         | KW_CONNECTPORT NUMBER         { add_connect_port_allowed($2); }

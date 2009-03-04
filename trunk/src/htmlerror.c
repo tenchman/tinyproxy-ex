@@ -227,8 +227,8 @@ int add_error_variable(struct conn_s *connptr, char *key, char *val)
   connptr->error_variables[connptr->error_variable_count - 1]->error_val =
       safestrdup(val);
   if ((!connptr->error_variables[connptr->error_variable_count - 1]->error_key)
-      || (!connptr->error_variables[connptr->error_variable_count - 1]->
-	  error_val))
+      || (!connptr->
+	  error_variables[connptr->error_variable_count - 1]->error_val))
     return (-1);
 
   return (0);

@@ -28,6 +28,58 @@
 #include "sock.h"
 #include "text.h"
 
+struct sock_s {
+  int fd;
+  struct sockaddr_in addr;
+  socklen_t len;
+};
+
+/* GT:
+ * this struct holds informations about any of our addresses
+ * we are listen on
+**/
+static struct listener_s {
+  int total;			/* number of sock_s entries used        */
+  int allocated;		/* number of sock_s entries allocated   */
+  int maxfd;
+  struct sock_s *sock;
+} listeners = {
+.total = 0,.allocated = 0,.maxfd = -1,.sock = NULL};
+
+/*
+ * Add and initialize a listener, update maxfd, total, etc.pp
+**/
+int add_listener(const char *addr, int port)
+{
+  struct sock_s s;
+
+  memset(&s, 0, sizeof(s));
+  s.addr.sin_family = AF_INET;
+  s.addr.sin_addr.s_addr = inet_addr(addr);
+  s.addr.sin_port = htons(port);
+
+  if (listeners.total >= listeners.allocated) {
+    struct sock_s *new;
+
+    new = safecalloc(listeners.allocated + 10, sizeof(struct sock_s));
+    if (!new) {
+      fprintf(stderr, "listener_add: oom, exiting\n");
+      exit(EXIT_FAILURE);
+    }
+    memcpy(new, listeners.sock, listeners.allocated * sizeof(struct sock_s));
+    listeners.sock = new;
+    listeners.allocated += 10;
+  }
+  memcpy(&listeners.sock[listeners.total], &s, sizeof(s));
+  listeners.total++;
+  return 0;
+}
+
+int listeners_total()
+{
+  return listeners.total;
+}
+
 /*
  * Take a string host address and return a struct in_addr so we can connect
  * to the remote host.
@@ -218,43 +270,110 @@ int socket_blocking(int sock)
  * the pointer, while the socket is returned as a default return.
  *	- rjkaes
  */
-int listen_sock(uint16_t port, socklen_t * addrlen)
+int listen_sock(struct sock_s *sock)
 {
   int listenfd;
   const int on = 1;
-  struct sockaddr_in addr;
 
-  assert(port > 0);
-  assert(addrlen != NULL);
+  assert(sock != NULL);
 
   listenfd = socket(AF_INET, SOCK_STREAM, 0);
   setsockopt(listenfd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
 
-  memset(&addr, 0, sizeof(addr));
-  addr.sin_family = AF_INET;
-  addr.sin_port = htons(port);
-
-  if (config.ipAddr) {
-    addr.sin_addr.s_addr = inet_addr(config.ipAddr);
-  } else {
-    addr.sin_addr.s_addr = inet_addr("0.0.0.0");
-  }
-
-  if (bind(listenfd, (struct sockaddr *) &addr, sizeof(addr)) < 0) {
-    log_message(LOG_ERR, "Unable to bind listening socket because of %s",
-		strerror(errno));
+  if (bind
+      (listenfd, (struct sockaddr *) &sock->addr,
+       sizeof(struct sockaddr_in)) < 0) {
+    log_message(LOG_ERR, "Unable to bind listening: %s", strerror(errno));
     return -1;
   }
 
   if (listen(listenfd, MAXLISTEN) < 0) {
-    log_message(LOG_ERR, "Unable to start listening socket because of %s",
-		strerror(errno));
+    log_message(LOG_ERR, "Unable to start listening: %s", strerror(errno));
     return -1;
   }
 
-  *addrlen = sizeof(addr);
-
   return listenfd;
+}
+
+/*
+ * wait for a connection on one of our listening sockets and
+ * return the socket descriptor
+**/
+int accept_sock(void)
+{
+  int i, listenfd = -1, fd = -1;
+  fd_set fds;
+
+  FD_ZERO(&fds);
+
+  for (i = 0; i < listeners.total; i++) {
+    if (listeners.sock[i].fd != -1)
+      FD_SET(listeners.sock[i].fd, &fds);
+  }
+
+  if (select(listeners.maxfd + 1, &fds, NULL, NULL, NULL) == -1) {
+    log_message(LOG_ERR, "select() %s", strerror(errno));
+    goto COMMON_EXIT;
+  }
+
+  for (i = 0; i < listeners.total; i++) {
+    if (listeners.sock[i].fd == -1)
+      continue;
+    if (FD_ISSET(listeners.sock[i].fd, &fds)) {
+      listenfd = listeners.sock[i].fd;
+      break;
+    }
+  }
+
+  if (listenfd == -1) {
+    log_message(LOG_ERR, "accept_sock: unexpected event");
+    goto COMMON_EXIT;
+  }
+
+  if ((fd = accept(listenfd, NULL, NULL)) == -1) {
+    log_message(LOG_ERR, "accept() %s", strerror(errno));
+    goto COMMON_EXIT;
+  }
+
+  log_message(LOG_INFO, "accepted connection on %d", fd);
+
+COMMON_EXIT:
+  return fd;
+}
+
+/*
+ * start listening
+ *
+ * return 0 if at least one listener succeeds, -1 otherwise
+**/
+int start_listeners(void)
+{
+  int i;
+  for (i = 0; i < listeners.total; i++) {
+    int fd = listen_sock(&listeners.sock[i]);
+    if (fd != -1) {
+      listeners.maxfd = fd;
+      log_message(LOG_NOTICE, "Start listening on %s:%d",
+		  inet_ntoa(listeners.sock[i].addr.sin_addr),
+		  ntohs(listeners.sock[i].addr.sin_port));
+    }
+    listeners.sock[i].fd = fd;
+  }
+  return listeners.maxfd;
+}
+
+/*
+ * close all opened listeners
+**/
+void close_listeners(void)
+{
+  int i;
+  for (i = 0; i < listeners.total; i++) {
+    if (listeners.sock[i].fd != -1) {
+      close(listeners.sock[i].fd);
+      listeners.sock[i].fd = -1;
+    }
+  }
 }
 
 /*

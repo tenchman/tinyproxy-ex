@@ -247,11 +247,11 @@ int main(int argc, char **argv)
   /*
    * Set the default values if they were not set in the config file.
    */
-  if (config.port == 0) {
-    fprintf(stderr,
-	    "%s: You MUST set a Port in the configuration file.\n", argv[0]);
-    exit(EX_SOFTWARE);
+  if (listeners_total() <= 0) {
+    fprintf(stderr, "%s: Missing or wrong \"listen\" directive\n", argv[0]);
+    exit(EX_OSERR);
   }
+  
   if (!config.stathost) {
     log_message(LOG_INFO, "Setting stathost to \"%s\".", DEFAULT_STATHOST);
     config.stathost = DEFAULT_STATHOST;
@@ -295,6 +295,7 @@ int main(int argc, char **argv)
     anonymous_insert("Content-Type");
   }
 
+  
   if (godaemon == TRUE)
     makedaemon();
 
@@ -310,7 +311,7 @@ int main(int argc, char **argv)
   /*
    * Start listening on the selected port.
    */
-  if (child_listening_sock(config.port) < 0) {
+  if (start_listeners() < 0) {
     fprintf(stderr, "%s: Could not create listening socket.\n", argv[0]);
     exit(EX_OSERR);
   }
@@ -398,7 +399,7 @@ int main(int argc, char **argv)
   log_message(LOG_INFO, "Shutting down.");
 
   child_kill_children();
-  child_close_sock();
+  close_listeners();
 
   /*
    * Remove the PID file.

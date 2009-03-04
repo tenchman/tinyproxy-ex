@@ -28,9 +28,6 @@
 #include "utils.h"
 #include "proctitle.h"
 
-static int listenfd;
-static socklen_t addrlen;
-
 /*
  * Stores the internal data needed for each child (connection)
  */
@@ -174,23 +171,15 @@ int child_mark_empty(pid_t pid)
 static void child_main(struct child_s *ptr)
 {
   int connfd;
-  struct sockaddr *cliaddr;
-  socklen_t clilen;
-
-  cliaddr = safemalloc(addrlen);
-  if (!cliaddr) {
-    log_message(LOG_CRIT, "Could not allocate memory for child address.");
-    exit(0);
-  }
 
   ptr->connects = 0;
 
   while (!config.quit) {
+
     ptr->status = T_WAITING;
     proctitle("idle (%d)", ptr->connects);
-    clilen = addrlen;
 
-    connfd = accept(listenfd, cliaddr, &clilen);
+    connfd = accept_sock();
 
 #ifndef NDEBUG
     /*
@@ -256,7 +245,6 @@ static void child_main(struct child_s *ptr)
   ptr->status = T_EMPTY;
   ptr->tid = -1;
 
-  safefree(cliaddr);
   exit(0);
 }
 
@@ -432,15 +420,4 @@ void child_kill_children(void)
     if (child_ptr[i].status != T_EMPTY)
       kill(child_ptr[i].tid, SIGTERM);
   }
-}
-
-int child_listening_sock(uint16_t port)
-{
-  listenfd = listen_sock(port, &addrlen);
-  return listenfd;
-}
-
-void child_close_sock(void)
-{
-  close(listenfd);
 }
