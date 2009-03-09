@@ -236,13 +236,13 @@ int http_message_send(http_message_t msg, int fd)
     return -EINVAL;
 
   /* Write the response line */
-  if (write_message(fd, "HTTP/1.0 %d %s\r\n",
+  if (send_message(fd, "HTTP/1.0 %d %s\r\n",
 		    msg->response.code, msg->response.string) < 0)
     return -1;
 
   /* Go through all the headers */
   for (i = 0; i != msg->headers.used; ++i)
-    if (write_message(fd, "%s\r\n", msg->headers.strings[i]) < 0)
+    if (send_message(fd, "%s\r\n", msg->headers.strings[i]) < 0)
       return -1;
 
   /* Output the date, content-length and the separator between the headers
@@ -250,13 +250,13 @@ int http_message_send(http_message_t msg, int fd)
   global_time = time(NULL);
   strftime(timebuf, sizeof(timebuf), "%a, %d %b %Y %H:%M:%S GMT",
 	   gmtime(&global_time));
-  if (write_message(fd, "Date: %s\r\nContent-length: %u\r\n\r\n",
+  if (send_message(fd, "Date: %s\r\nContent-length: %u\r\n\r\n",
 		    timebuf, msg->body.length) < 0)
     return -1;
 
   /* If there's a body, send it! */
   if (msg->body.length > 0)
-    if (safe_write(fd, msg->body.text, msg->body.length) < 0)
+    if (safe_send(fd, msg->body.text, msg->body.length) < 0)
       return -1;
 
   return 0;

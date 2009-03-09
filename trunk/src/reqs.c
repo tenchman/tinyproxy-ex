@@ -143,7 +143,7 @@ static int read_request_line(struct conn_s *connptr)
   ssize_t len;
 
 retry:
-  len = readline(connptr->client_fd, &connptr->request_line);
+  len = recvline(connptr->client_fd, &connptr->request_line);
   if (len <= 0) {
     log_message(LOG_ERR,
 		"read_request_line: Client (file descriptor: %d) closed socket before read.",
@@ -476,7 +476,7 @@ establish_http_connection(struct conn_s *connptr, struct request_s *request)
   else
     portbuff[0] = '\0';
 
-  return write_message(connptr->server_fd,
+  return send_message(connptr->server_fd,
 		       "%s %s HTTP/1.0\r\n"
 		       "Host: %s%s\r\n"
 		       "Connection: close\r\n",
@@ -495,7 +495,7 @@ establish_http_connection(struct conn_s *connptr, struct request_s *request)
  */
 static inline int send_ssl_response(struct conn_s *connptr)
 {
-  return write_message(connptr->client_fd,
+  return send_message(connptr->client_fd,
 		       "%s\r\n"
 		       "%s\r\n" "\r\n", SSL_CONNECTION_RESPONSE, PROXY_AGENT);
 }
@@ -781,12 +781,12 @@ static int pull_client_data(struct conn_s *connptr, uint64_t length)
     return -1;
 
   do {
-    len = safe_read(connptr->client_fd, buffer, min(MAXBUFFSIZE, length));
+    len = safe_recv(connptr->client_fd, buffer, min(MAXBUFFSIZE, length));
     if (len <= 0)
       goto ERROR_EXIT;
 
     if (!connptr->error_variables) {
-      if (safe_write(connptr->server_fd, buffer, len) < 0)
+      if (safe_send(connptr->server_fd, buffer, len) < 0)
 	goto ERROR_EXIT;
     }
     connptr->server.processed += (uint64_t) len;
@@ -806,7 +806,7 @@ static int pull_client_data(struct conn_s *connptr, uint64_t length)
     goto ERROR_EXIT;
 
   if (len == 2 && CHECK_CRLF(buffer, len))
-    read(connptr->client_fd, buffer, 2);
+    recv(connptr->client_fd, buffer, 2, 0);
 
   safefree(buffer);
   return 0;
@@ -830,7 +830,7 @@ static int add_xtinyproxy_ex_header(struct conn_s *connptr)
   if (connptr->server_fd < 0)
     return 0;
 
-  return write_message(connptr->server_fd,
+  return send_message(connptr->server_fd,
 		       "X-Tinyproxy: %s\r\n", connptr->client_ip_addr);
 }
 #endif				/* XTINYPROXY */
@@ -840,7 +840,7 @@ static int add_proxy_authentication(struct conn_s *connptr)
   if (connptr->server_fd < 0)
     return 0;
 
-  return write_message(connptr->server_fd,
+  return send_message(connptr->server_fd,
 		       "Proxy-Authorization: Basic %s\r\n",
 		       connptr->upstream_proxy->authentication);
 }
@@ -885,7 +885,7 @@ static int get_all_headers(int fd, hashmap_t hashofheaders)
   assert(hashofheaders != NULL);
 
   for (;;) {
-    if ((len = readline(fd, &header)) <= 0) {
+    if ((len = recvline(fd, &header)) <= 0) {
       safefree(header);
       return -1;
     }
@@ -1022,14 +1022,14 @@ write_via_header(int fd, hashmap_t hashofheaders,
    */
   len = hashmap_entry_by_key(hashofheaders, "via", &data);
   if (len > 0) {
-    ret = write_message(fd,
+    ret = send_message(fd,
 			"Via: %s, %hu.%hu %s (%s/%s)\r\n",
 			(char *) data, major, minor, hostname, PACKAGE,
 			VERSION);
 
     hashmap_remove(hashofheaders, "via");
   } else {
-    ret = write_message(fd,
+    ret = send_message(fd,
 			"Via: %hu.%hu %s (%s/%s)\r\n",
 			major, minor, hostname, PACKAGE, VERSION);
   }
@@ -1118,7 +1118,7 @@ process_client_headers(struct conn_s *connptr, hashmap_t hashofheaders)
 
       if (!is_anonymous_enabled() || anonymous_search(data) > 0) {
 	ret =
-	    write_message(connptr->server_fd, "%s: %s\r\n", data,
+	    send_message(connptr->server_fd, "%s: %s\r\n", data,
 			  (char *) header);
 	if (ret < 0) {
 	  indicate_http_error(connptr, 503,
@@ -1140,7 +1140,7 @@ process_client_headers(struct conn_s *connptr, hashmap_t hashofheaders)
     add_proxy_authentication(connptr);
 
   /* Write the final "blank" line to signify the end of the headers */
-  if (safe_write(connptr->server_fd, "\r\n", 2) < 0)
+  if (safe_send(connptr->server_fd, "\r\n", 2) < 0)
     return -1;
 
   /*
@@ -1180,7 +1180,7 @@ static int process_server_headers(struct conn_s *connptr)
   /* FIXME: Remember to handle a "simple_req" type */
 
   /* Get the response line from the remote server. */
-  len = readline(connptr->server_fd, &response_line);
+  len = recvline(connptr->server_fd, &response_line);
   if (len <= 0)
     return -1;
 
@@ -1233,7 +1233,7 @@ static int process_server_headers(struct conn_s *connptr)
   }
 
   /* Send the saved response line first */
-  ret = write_message(connptr->client_fd, "%s\r\n", response_line);
+  ret = send_message(connptr->client_fd, "%s\r\n", response_line);
   safefree(response_line);
   if (ret < 0)
     goto ERROR_EXIT;
@@ -1272,7 +1272,7 @@ static int process_server_headers(struct conn_s *connptr)
       hashmap_return_entry(hashofheaders, iter, &data, &header);
 
       ret =
-	  write_message(connptr->client_fd, "%s: %s\r\n", data,
+	  send_message(connptr->client_fd, "%s: %s\r\n", data,
 			(char *) header);
       if (ret < 0)
 	goto ERROR_EXIT;
@@ -1281,7 +1281,7 @@ static int process_server_headers(struct conn_s *connptr)
   hashmap_delete(hashofheaders);
 
   /* Write the final blank line to signify the end of the headers */
-  if (safe_write(connptr->client_fd, "\r\n", 2) < 0)
+  if (safe_send(connptr->client_fd, "\r\n", 2) < 0)
     return -1;
 
   return 0;
@@ -1361,7 +1361,7 @@ static void relay_connection(struct conn_s *connptr)
     }
 
     if (FD_ISSET(connptr->server_fd, &rset)) {
-      bytes_received = read_buffer(connptr->server_fd,
+      bytes_received = recv_buffer(connptr->server_fd,
 				   connptr->sbuffer, connptr);
       if (bytes_received < 0)
 	break;
@@ -1375,14 +1375,14 @@ static void relay_connection(struct conn_s *connptr)
      * pull_client_data()
      */
     if (FD_ISSET(connptr->client_fd, &rset)
-	&& read_buffer(connptr->client_fd, connptr->cbuffer, connptr) < 0) {
+	&& recv_buffer(connptr->client_fd, connptr->cbuffer, connptr) < 0) {
       break;
     }
     /*
      * write the request body to the server
      */
     if (FD_ISSET(connptr->server_fd, &wset)) {
-      if ((ret = write_buffer(connptr->server_fd, connptr->cbuffer)) < 0)
+      if ((ret = send_buffer(connptr->server_fd, connptr->cbuffer)) < 0)
 	break;
       connptr->server.processed += (uint64_t) ret;
     }
@@ -1390,7 +1390,7 @@ static void relay_connection(struct conn_s *connptr)
      * write response body to the client
      */
     if (FD_ISSET(connptr->client_fd, &wset)) {
-      if ((ret = write_buffer(connptr->client_fd, connptr->sbuffer)) < 0)
+      if ((ret = send_buffer(connptr->client_fd, connptr->sbuffer)) < 0)
 	break;
       connptr->client.processed += (uint64_t) ret;
     }
@@ -1408,7 +1408,7 @@ static void relay_connection(struct conn_s *connptr)
 
   socket_blocking(connptr->client_fd);
   while (buffer_size(connptr->sbuffer) > 0) {
-    if ((ret = write_buffer(connptr->client_fd, connptr->sbuffer)) < 0)
+    if ((ret = send_buffer(connptr->client_fd, connptr->sbuffer)) < 0)
       break;
     connptr->client.processed += (uint64_t) ret;
   }
@@ -1420,7 +1420,7 @@ static void relay_connection(struct conn_s *connptr)
    */
   socket_blocking(connptr->server_fd);
   while (buffer_size(connptr->cbuffer) > 0) {
-    if ((ret = write_buffer(connptr->server_fd, connptr->cbuffer)) < 0)
+    if ((ret = send_buffer(connptr->server_fd, connptr->cbuffer)) < 0)
       break;
     connptr->server.processed += (uint64_t) ret;
   }

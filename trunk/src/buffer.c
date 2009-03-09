@@ -206,7 +206,7 @@ static struct bufline_s *remove_from_buffer(struct buffer_s *buffptr)
  * Reads the bytes from the socket, and adds them to the buffer.
  * Takes a connection and returns the number of bytes read.
  */
-ssize_t read_buffer(int fd, struct buffer_s * buffptr, struct conn_s * connptr)
+ssize_t recv_buffer(int fd, struct buffer_s * buffptr, struct conn_s * connptr)
 {
   ssize_t bytesin;
   unsigned char buffer[READ_BUFFER_SIZE];
@@ -226,13 +226,13 @@ ssize_t read_buffer(int fd, struct buffer_s * buffptr, struct conn_s * connptr)
 #ifdef FTP_SUPPORT
     if (connptr->ftp_isdir) {
       if (add_to_buffer_formatted(buffptr, buffer, bytesin, connptr) < 0) {
-	log_message(LOG_ERR, "readbuff: add_to_buffer_formatted() error.");
+	log_message(LOG_ERR, "recv_buffer: add_to_buffer_formatted() error.");
 	return -1;
       }
     } else
 #endif
     if (add_to_buffer(buffptr, buffer, bytesin) < 0) {
-      log_message(LOG_ERR, "readbuff: add_to_buffer() error.");
+      log_message(LOG_ERR, "recv_buffer: add_to_buffer() error.");
       return -1;
     }
     return bytesin;
@@ -267,7 +267,7 @@ ssize_t read_buffer(int fd, struct buffer_s * buffptr, struct conn_s * connptr)
  * Write the bytes in the buffer to the socket.
  * Takes a connection and returns the number of bytes written.
  */
-ssize_t write_buffer(int fd, struct buffer_s * buffptr)
+ssize_t send_buffer(int fd, struct buffer_s * buffptr)
 {
   ssize_t bytessent;
   struct bufline_s *line;
@@ -306,12 +306,12 @@ ssize_t write_buffer(int fd, struct buffer_s * buffptr)
     case ENOBUFS:
     case ENOMEM:
       log_message(LOG_ERR,
-		  "writebuff: write() error [NOBUFS/NOMEM] \"%s\" on file descriptor %d",
+		  "send_buffer: send() error [NOBUFS/NOMEM] \"%s\" on file descriptor %d",
 		  strerror(errno), fd);
       return 0;
     default:
       log_message(LOG_ERR,
-		  "writebuff: write() error \"%s\" on file descriptor %d",
+		  "send_buffer: send() error \"%s\" on file descriptor %d",
 		  strerror(errno), fd);
       return -1;
     }

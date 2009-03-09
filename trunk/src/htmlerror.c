@@ -111,13 +111,13 @@ int send_html_file(FILE * infile, struct conn_s *connptr)
 	if (in_variable) {
 	  *p = '\0';
 	  if ((varval = lookup_variable(connptr, varstart))) {
-	    writeret = write_message(connptr->client_fd, "%s", varval);
+	    writeret = send_message(connptr->client_fd, "%s", varval);
 	    if (writeret < 0)
 	      return (writeret);
 	  }
 	  in_variable = 0;
 	} else {
-	  writeret = write_message(connptr->client_fd, "%c", *p);
+	  writeret = send_message(connptr->client_fd, "%c", *p);
 	  if (writeret < 0)
 	    return (writeret);
 	}
@@ -136,7 +136,7 @@ int send_html_file(FILE * infile, struct conn_s *connptr)
 	  in_variable = 0;
       default:
 	if (!in_variable) {
-	  writeret = write_message(connptr->client_fd, "%c", *p);
+	  writeret = send_message(connptr->client_fd, "%c", *p);
 	  if (writeret < 0)
 	    return (writeret);
 	}
@@ -155,7 +155,7 @@ int send_http_headers(struct conn_s *connptr, int code, char *message)
       "Server: %s/%s\r\n"
       "Content-Type: text/html\r\n" "Connection: close\r\n" "\r\n";
 
-  return (write_message(connptr->client_fd, headers,
+  return (send_message(connptr->client_fd, headers,
 			code, message, PACKAGE, VERSION));
 }
 
@@ -182,7 +182,7 @@ int send_http_error_message(struct conn_s *connptr)
   if (ret != -1) {
     error_file = get_html_file(connptr->error_number);
     if (!(infile = fopen(error_file, "r"))) {
-      ret = write_message(connptr->client_fd, fallback_error,
+      ret = send_message(connptr->client_fd, fallback_error,
 			  connptr->error_string,
 			  PACKAGE, VERSION,
 			  errno, strerror(errno), connptr->error_string);

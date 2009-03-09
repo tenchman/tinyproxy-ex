@@ -29,7 +29,7 @@
  * Write the buffer to the socket. If an EINTR occurs, pick up and try
  * again. Keep sending until the buffer has been sent.
  */
-ssize_t safe_write(int fd, const char *buffer, size_t count)
+ssize_t safe_send(int fd, const char *buffer, size_t count)
 {
   ssize_t len, bytestosend = (ssize_t) count;
 
@@ -58,15 +58,15 @@ ssize_t safe_write(int fd, const char *buffer, size_t count)
 }
 
 /*
- * Matched pair for safe_write(). If an EINTR occurs, pick up and try
+ * Matched pair for safe_send(). If an EINTR occurs, pick up and try
  * again.
  */
-ssize_t safe_read(int fd, char *buffer, size_t count)
+ssize_t safe_recv(int fd, char *buffer, size_t count)
 {
   ssize_t len;
 
   do {
-    len = read(fd, buffer, count);
+    len = recv(fd, buffer, count, 0);
   } while (len < 0 && errno == EINTR);
 
   return len;
@@ -80,7 +80,7 @@ ssize_t safe_read(int fd, char *buffer, size_t count)
  *
  * Return the bytes written to the file descriptor or -1 in case of an error.
  */
-int write_message(int fd, const char *fmt, ...)
+int send_message(int fd, const char *fmt, ...)
 {
   ssize_t n;
   ssize_t size = (1024 * 8);	/* start with 8 KB and go from there */
@@ -114,7 +114,7 @@ int write_message(int fd, const char *fmt, ...)
       buf = tmpbuf;
   }
 
-  n = safe_write(fd, buf, n);
+  n = safe_send(fd, buf, n);
   safefree(buf);
   return n;
 }
@@ -130,7 +130,7 @@ int write_message(int fd, const char *fmt, ...)
  */
 #define SEGMENT_LEN (512)
 #define MAXIMUM_BUFFER_LENGTH (128 * 1024)
-ssize_t readline(int fd, char **whole_buffer)
+ssize_t recvline(int fd, char **whole_buffer)
 {
   ssize_t whole_buffer_len;
   char buffer[SEGMENT_LEN];
@@ -162,7 +162,7 @@ ssize_t readline(int fd, char **whole_buffer)
 
       if ((long) (time(NULL) - starttime) > (long) config.idletimeout) {
 	log_message(LOG_INFO,
-		    "Idle Timeout in readline %u.", config.idletimeout);
+		    "Idle Timeout in recvline %u.", config.idletimeout);
 	goto CLEANUP;
       }
       usleep(200000);

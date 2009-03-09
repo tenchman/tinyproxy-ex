@@ -20,6 +20,7 @@
 #include <alloca.h>
 #endif
 #include "reqs.h"
+#include "network.h"
 #include "conns.h"
 #include "utils.h"
 #include "heap.h"
@@ -209,7 +210,7 @@ int send_and_receive(int fd, const char *cmd, char *buf, size_t buflen)
   char *pos = buf, *end, *tmp;
   int retval = -1;
 
-  if (cmd && write(fd, cmd, strlen(cmd)) == -1) {
+  if (cmd && safe_send(fd, cmd, strlen(cmd)) == -1) {
     log_message(LOG_WARNING, "Failed to send %s", cmd);
     return -1;
   }
@@ -219,7 +220,7 @@ int send_and_receive(int fd, const char *cmd, char *buf, size_t buflen)
    * see "ftp.kernel.org" after PASS command
    */
   while (total < buflen) {
-    len = read(fd, buf + total, buflen - total);
+    len = safe_recv(fd, buf + total, buflen - total);
     if (len == -1) {
       log_message(LOG_WARNING, "Read error after command %s.", cmd);
       return -1;

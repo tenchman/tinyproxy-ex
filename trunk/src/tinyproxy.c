@@ -251,7 +251,7 @@ int main(int argc, char **argv)
     fprintf(stderr, "%s: Missing or wrong \"listen\" directive\n", argv[0]);
     exit(EX_OSERR);
   }
-  
+
   if (!config.stathost) {
     log_message(LOG_INFO, "Setting stathost to \"%s\".", DEFAULT_STATHOST);
     config.stathost = DEFAULT_STATHOST;
@@ -295,7 +295,7 @@ int main(int argc, char **argv)
     anonymous_insert("Content-Type");
   }
 
-  
+
   if (godaemon == TRUE)
     makedaemon();
 
