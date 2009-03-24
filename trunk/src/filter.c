@@ -347,6 +347,8 @@ void filter_destroy(void)
  */
 void filter_set_default_policy(filter_policy_t policy)
 {
+  if (policy == FILTER_DENY)
+    config.filter = 1;
   config.default_policy = policy;
 }
 
