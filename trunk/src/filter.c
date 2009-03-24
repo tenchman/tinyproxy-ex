@@ -289,6 +289,11 @@ void filter_init(void)
   struct filter_list *p = NULL, *q;
   struct filter_s *f;
 
+  if (!config.filters) {
+    filterlist_initialized = 1;
+    return;
+  }
+
   if (!fl && !filterlist_initialized) {
     int i = 0;
     while ((f = config.filters[i++])) {

@@ -711,13 +711,16 @@ static struct request_s *process_request(struct conn_s *connptr,
   /*
    * Filter restricted domains/urls, skip local requests
    */
-  if (config.filter && connptr->local_request == FALSE && connptr->aclname) {
+  if (config.filter && connptr->local_request == FALSE) {
     char *status = NULL;
 
-    if (config.filter_url)
-      ret = filter_domain(url, connptr->aclname, &status);
-    else
-      ret = filter_domain(request->host, connptr->aclname, &status);
+    if (connptr->aclname) {
+      if (config.filter_url)
+	ret = filter_domain(url, connptr->aclname, &status);
+      else
+	ret = filter_domain(request->host, connptr->aclname, &status);
+    } else
+      ret = config.default_policy;
 
     if (ret) {
 
