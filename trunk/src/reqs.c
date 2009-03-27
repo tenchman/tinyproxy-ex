@@ -724,6 +724,9 @@ static struct request_s *process_request(struct conn_s *connptr,
 			  NULL);
     } else {
 
+      if (!aclname)
+	goto ALLOWED;
+      
       if (config.filter_url)
 	ret = filter_domain(url, aclname, &status);
       else
