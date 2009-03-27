@@ -248,12 +248,10 @@ static int check_netrange(const char *ip_address, struct extacl_s *aclptr)
  *     0/1 depending on config->default_policy
  */
 int
-find_extacl(int fd, const char *ip_address, const char *string_address,
-	    char **aclname)
+find_extacl(const char *ip_address, const char *string_address, char **aclname)
 {
   struct extacl_s *aclptr;
 
-  assert(fd >= 0);
   assert(ip_address != NULL);
   assert(string_address != NULL);
   assert(aclname != NULL);

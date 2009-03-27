@@ -138,8 +138,6 @@ void destroy_conn(struct conn_s *connptr)
     safefree(connptr->client_ip_addr);
   if (connptr->client_string_addr)
     safefree(connptr->client_string_addr);
-  if (connptr->aclname)
-    safefree(connptr->aclname);
 
   safefree(connptr);
 

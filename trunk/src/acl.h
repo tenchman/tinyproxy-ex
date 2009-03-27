@@ -22,7 +22,7 @@ typedef enum { ACL_ALLOW, ACL_DENY } acl_access_t;
 typedef enum { ACL_TYPE_SRC, ACL_TYPE_DST } acl_type_t;
 
 extern int insert_extacl(char *aclname, acl_type_t acltype, char *data);
-extern int find_extacl(int fd, const char *ip_address,
+extern int find_extacl(const char *ip_address,
 		       const char *string_address, char **aclname);
 
 #endif

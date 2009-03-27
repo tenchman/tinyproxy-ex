@@ -477,10 +477,10 @@ establish_http_connection(struct conn_s *connptr, struct request_s *request)
     portbuff[0] = '\0';
 
   return send_message(connptr->server_fd,
-		       "%s %s HTTP/1.0\r\n"
-		       "Host: %s%s\r\n"
-		       "Connection: close\r\n",
-		       request->method, request->path, request->host, portbuff);
+		      "%s %s HTTP/1.0\r\n"
+		      "Host: %s%s\r\n"
+		      "Connection: close\r\n",
+		      request->method, request->path, request->host, portbuff);
 }
 
 /*
@@ -496,8 +496,8 @@ establish_http_connection(struct conn_s *connptr, struct request_s *request)
 static inline int send_ssl_response(struct conn_s *connptr)
 {
   return send_message(connptr->client_fd,
-		       "%s\r\n"
-		       "%s\r\n" "\r\n", SSL_CONNECTION_RESPONSE, PROXY_AGENT);
+		      "%s\r\n"
+		      "%s\r\n" "\r\n", SSL_CONNECTION_RESPONSE, PROXY_AGENT);
 }
 
 /*
@@ -713,16 +713,24 @@ static struct request_s *process_request(struct conn_s *connptr,
    */
   if (config.filter && connptr->local_request == FALSE) {
     char *status = NULL;
+    char *aclname = NULL;
 
-    if (connptr->aclname) {
+    if (find_extacl(connptr->client_ip_addr,
+		    connptr->client_string_addr, &aclname) == FILTER_DENY) {
+      update_stats(STAT_DENIED);
+      indicate_http_error(connptr, 403, "Access denied",
+			  "detail",
+			  "The administrator of this proxy has not configured it to service requests from your host.",
+			  NULL);
+    } else {
+
       if (config.filter_url)
-	ret = filter_domain(url, connptr->aclname, &status);
+	ret = filter_domain(url, aclname, &status);
       else
-	ret = filter_domain(request->host, connptr->aclname, &status);
-    } else
-      ret = config.default_policy;
+	ret = filter_domain(request->host, aclname, &status);
 
-    if (ret) {
+      if (!ret)
+	goto ALLOWED;
 
       if (config.filter_url)
 	log_message(LOG_NOTICE,
@@ -753,6 +761,7 @@ static struct request_s *process_request(struct conn_s *connptr,
     }
   }
 #endif
+ALLOWED:
 
   safefree(url);
 
@@ -834,7 +843,7 @@ static int add_xtinyproxy_ex_header(struct conn_s *connptr)
     return 0;
 
   return send_message(connptr->server_fd,
-		       "X-Tinyproxy: %s\r\n", connptr->client_ip_addr);
+		      "X-Tinyproxy: %s\r\n", connptr->client_ip_addr);
 }
 #endif				/* XTINYPROXY */
 
@@ -844,8 +853,8 @@ static int add_proxy_authentication(struct conn_s *connptr)
     return 0;
 
   return send_message(connptr->server_fd,
-		       "Proxy-Authorization: Basic %s\r\n",
-		       connptr->upstream_proxy->authentication);
+		      "Proxy-Authorization: Basic %s\r\n",
+		      connptr->upstream_proxy->authentication);
 }
 
 /*
@@ -1026,15 +1035,14 @@ write_via_header(int fd, hashmap_t hashofheaders,
   len = hashmap_entry_by_key(hashofheaders, "via", &data);
   if (len > 0) {
     ret = send_message(fd,
-			"Via: %s, %hu.%hu %s (%s/%s)\r\n",
-			(char *) data, major, minor, hostname, PACKAGE,
-			VERSION);
+		       "Via: %s, %hu.%hu %s (%s/%s)\r\n",
+		       (char *) data, major, minor, hostname, PACKAGE, VERSION);
 
     hashmap_remove(hashofheaders, "via");
   } else {
     ret = send_message(fd,
-			"Via: %hu.%hu %s (%s/%s)\r\n",
-			major, minor, hostname, PACKAGE, VERSION);
+		       "Via: %hu.%hu %s (%s/%s)\r\n",
+		       major, minor, hostname, PACKAGE, VERSION);
   }
 
   return ret;
@@ -1122,7 +1130,7 @@ process_client_headers(struct conn_s *connptr, hashmap_t hashofheaders)
       if (!is_anonymous_enabled() || anonymous_search(data) > 0) {
 	ret =
 	    send_message(connptr->server_fd, "%s: %s\r\n", data,
-			  (char *) header);
+			 (char *) header);
 	if (ret < 0) {
 	  indicate_http_error(connptr, 503,
 			      "Could not send data to remote server",
@@ -1275,8 +1283,7 @@ static int process_server_headers(struct conn_s *connptr)
       hashmap_return_entry(hashofheaders, iter, &data, &header);
 
       ret =
-	  send_message(connptr->client_fd, "%s: %s\r\n", data,
-			(char *) header);
+	  send_message(connptr->client_fd, "%s: %s\r\n", data, (char *) header);
       if (ret < 0)
 	goto ERROR_EXIT;
     }
@@ -1543,7 +1550,7 @@ void handle_connection(int fd)
   char peer_ipaddr[PEER_IP_LENGTH];
   char peer_string[PEER_STRING_LENGTH];
   char errbuf[4096];
-  char *aclname = NULL, *tmp;
+  char *tmp;
 
   gettimeofday(&tv_s, NULL);
 
@@ -1557,18 +1564,6 @@ void handle_connection(int fd)
     close(fd);
     return;
   }
-
-  if (find_extacl(fd, peer_ipaddr, peer_string, &aclname) == FILTER_DENY) {
-    update_stats(STAT_DENIED);
-    indicate_http_error(connptr, 403, "Access denied",
-			"detail",
-			"The administrator of this proxy has not configured it to service requests from your host.",
-			NULL);
-    send_http_error_message(connptr);
-    goto COMMON_EXIT;
-  }
-
-  connptr->aclname = aclname;
 
   /*
    * If the client closes the connection before we can read any data, it
