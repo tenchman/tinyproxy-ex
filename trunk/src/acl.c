@@ -276,9 +276,10 @@ find_extacl(int fd, const char *ip_address, const char *string_address,
 	continue;
       }
 
-      if (aclptr->rangeend && check_netrange(ip_address, aclptr))
-	break;
-      else if (check_netaddr(ip_address, aclptr))
+      if (aclptr->rangeend) {
+	if (check_netrange(ip_address, aclptr))
+	  break;
+      } else if (check_netaddr(ip_address, aclptr))
 	break;
     }
 
