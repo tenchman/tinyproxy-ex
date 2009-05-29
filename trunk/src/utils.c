@@ -229,7 +229,13 @@ int create_file_safely(const char *filename, unsigned int truncate_file)
      * ("Little sympathy has been extended")
      */
 #ifdef HAVE_FTRUNCATE
-    ftruncate(fildes, 0);
+    if (ftruncate(fildes, 0) == -1) {
+      fprintf(stderr,
+	      "%s: Could not truncate file %s: %s.",
+	      PACKAGE, filename, strerror(errno));
+      close(fildes);
+      return -1;
+    }
 #else
     close(fildes);
     if ((fildes = open(filename, O_RDWR | O_CREAT | O_TRUNC, 0600)) < 0) {
