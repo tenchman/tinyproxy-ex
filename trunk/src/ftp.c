@@ -348,8 +348,13 @@ connect_ftp(struct conn_s *connptr, struct request_s *request, char *errbuf,
     goto COMMON_ERROR_QUIT;
 
   if (code == 250 || code == 230) {
-    if (file && *file)
-      asprintf(&connptr->ftp_basedir, "%s/", file);
+    if (file && *file) {
+      ssize_t flen = strlen(file);
+      connptr->ftp_basedir = safemalloc(flen + 2);
+      memcpy(connptr->ftp_basedir, file, flen);
+      connptr->ftp_basedir[flen] = '/';
+      connptr->ftp_basedir[flen + 1] = '\0';
+    }
     file = NULL;
     connptr->ftp_path = safestrdup(request->path);
   } else if (path) {
