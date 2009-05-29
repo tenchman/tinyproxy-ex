@@ -28,15 +28,16 @@
 void makedaemon(void)
 {
   if (fork() != 0)
-    exit(0);
+    exit(EXIT_SUCCESS);
 
   setsid();
   set_signal_handler(SIGHUP, SIG_IGN);
 
   if (fork() != 0)
-    exit(0);
+    exit(EXIT_SUCCESS);
 
-  chdir("/");
+  if (chdir("/") != 0)
+    exit(EXIT_FAILURE);
   umask(077);
 
 #if NDEBUG
