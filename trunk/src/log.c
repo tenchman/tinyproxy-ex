@@ -38,6 +38,7 @@ static char *syslog_level[] = {
 
 #define TIME_LENGTH 16
 #define STRING_LENGTH 800
+#define PREFIX_LENGTH TIME_LENGTH + 64
 
 /*
  * Global file descriptor for the log file
@@ -77,10 +78,10 @@ void close_log_file(void)
 /*
  * Truncate log file to a zero length.
  */
-void truncate_log_file(void)
+int truncate_log_file(void)
 {
   lseek(log_file_fd, 0, SEEK_SET);
-  ftruncate(log_file_fd, 0);
+  return ftruncate(log_file_fd, 0);
 }
 
 /*
@@ -98,8 +99,6 @@ void log_message(int level, char *fmt, ...)
 {
   va_list args;
   time_t nowtime;
-
-  char time_string[TIME_LENGTH];
   char str[STRING_LENGTH];
 
 #ifdef NDEBUG
@@ -160,19 +159,52 @@ void log_message(int level, char *fmt, ...)
 #  endif
   } else {
 #endif
+    char time_string[TIME_LENGTH];
+    struct iovec iov[3];
+    char pfx[PREFIX_LENGTH];
+    int truncated = 0;
+
+    assert(log_file_fd >= 0);
+
     nowtime = time(NULL);
     /* Format is month day hour:minute:second (24 time) */
     strftime(time_string, TIME_LENGTH, "%b %d %H:%M:%S", localtime(&nowtime));
 
-    snprintf(str, STRING_LENGTH, "%-9s %s [%ld]: ", syslog_level[level],
-	     time_string, (long int) getpid());
-
-    assert(log_file_fd >= 0);
-
-    write(log_file_fd, str, strlen(str));
-    vsnprintf(str, STRING_LENGTH, fmt, args);
-    write(log_file_fd, str, strlen(str));
-    write(log_file_fd, "\n", 1);
+    iov[0].iov_base = pfx;
+    iov[0].iov_len =
+	snprintf(pfx, PREFIX_LENGTH, "%-9s %s [%ld]: ", syslog_level[level],
+		 time_string, (long int) getpid());
+    iov[1].iov_base = str;
+    iov[1].iov_len = vsnprintf(str, STRING_LENGTH, fmt, args);
+    iov[2].iov_base = "\n";
+    iov[2].iov_len = 1;
+#ifdef HAVE_FTRUNCATE
+    /* if writev() fails with ENOSPC or EFBIG, ftruncate() the logfile and
+     * try again. If this fails too, bail out.
+     */
+  again:
+    if (writev(log_file_fd, iov, 3) == -1) {
+      if (!truncated && errno != ENOSPC && errno != EFBIG) {
+	fprintf(stderr, "%s: Could not write to logfile: %s.", PACKAGE,
+		strerror(errno));
+	exit(EXIT_FAILURE);
+      }
+      if (ftruncate(log_file_fd, 0) == -1) {
+	fprintf(stderr,
+		"%s: Could not write to logfile, ftruncate() failed: %s.",
+		PACKAGE, strerror(errno));
+	exit(EXIT_FAILURE);
+      }
+      goto again;
+    }
+#else
+    /* Without ftruncate() we simply bail out if writev() fails, sorry! */
+    if (writev(log_file_fd, iov, 3) == -1) {
+      fprintf(stderr, "%s: Could not write to logfile: %s.", PACKAGE,
+	      strerror(errno));
+      exit(EXIT_FAILURE);
+    }
+#endif
 
 #ifdef HAVE_SYSLOG_H
   }

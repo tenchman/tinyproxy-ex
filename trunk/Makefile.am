@@ -5,6 +5,8 @@ REDHAT = \
 	$(REDHAT_DIR)/tinyproxy-initd \
 	$(REDHAT_DIR)/tinyproxy.spec
 
+AUTO_FILES = config.guess config.sub depcomp ltmain.sh missing ylwrap m4/*.m4
+
 # Packaging files
 PACKAGING = $(REDHAT)
 
@@ -13,6 +15,7 @@ SUBDIRS = src doc
 
 ACLOCAL_AMFLAGS = -I m4
 install-data-local: tinyproxy-configure-file tinyproxy-html-files
+uninstall-local: uninstall-tinyproxy-configure-file uninstall-tinyproxy-html-files
 
 # Install the configuration file if it doesn't already exist
 tinyproxy-configure-file:
@@ -51,4 +54,10 @@ tinyproxy-html-files:
 	done
 	$(INSTALL) -m 644 $(srcdir)/doc/HTML_VARIABLES $(DESTDIR)$(datadir)/@PACKAGE@/HTML_VARIABLES
 	$(INSTALL) -m 644 $(srcdir)/doc/tinyproxy-ex.css $(DESTDIR)$(datadir)/@PACKAGE@/tinyproxy-ex.css
+
+uninstall-tinyproxy-html-files:
+	rm -f $(DESTDIR)$(datadir)/@PACKAGE@/*.dist
+
+uninstall-tinyproxy-configure-file:
+	rm -f $(DESTDIR)@TINYPROXY_CONFIG_DIR@/@TINYPROXY_CONFIG_FILE@-dist
 

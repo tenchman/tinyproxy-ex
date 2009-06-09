@@ -27,6 +27,7 @@ AC_DEFINE_UNQUOTED(TARGET_SYSTEM, ["$target"])
 
 AM_INIT_AUTOMAKE($PACKAGE_NAME, $PACKAGE_VERSION)
 AM_CONFIG_HEADER(config.h)
+AM_SILENT_RULES([yes])
 
 dnl Check if we're compiling on a weird platform :)
 dnl AC_AIX
@@ -142,6 +143,17 @@ if test x"$ftp_enabled" = x"yes"; then
     AC_DEFINE(FTP_SUPPORT)
 fi
 
+dnl Include support for status indicators via proctitle?
+AH_TEMPLATE([PROCTITLE_SUPPORT],
+            [Include support for proctitles.])
+AC_ARG_ENABLE(proctitle,
+              [AC_HELP_STRING([--enable-proctitle],
+                              [Enable support for proctitles (default is NO)])],
+              proctitle_enabled=$enableval, proctitle_enabled=no)
+if test x"$proctitle_enabled" = x"yes"; then
+    AC_DEFINE(PROCTITLE_SUPPORT)
+fi
+
 dnl Include the transparent proxy support
 AH_TEMPLATE([TRANSPARENT_PROXY],
 	    [Include support for using tinyproxy-ex as a transparent proxy.])
@@ -207,6 +219,7 @@ fi
 
 AC_CHECK_LIB(resolv, inet_aton)
 AC_CHECK_LIB(socks, main, socks_library=yes, socks_library=no)
+AC_CHECK_LIB(adns, adns_init, adnslib=yes, adnslib=no)
 
 dnl
 dnl Checks for headers
@@ -256,7 +269,7 @@ dnl
 AC_FUNC_ALLOCA
 
 AC_CHECK_FUNCS([isascii memcpy setrlimit ftruncate regexec])
-AC_CHECK_FUNCS([strlcpy strlcat])
+AC_CHECK_FUNCS([strlcpy strlcat writev])
 
 dnl
 dnl Compiler characteristics

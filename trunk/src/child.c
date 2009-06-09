@@ -394,8 +394,9 @@ void child_main_loop(void)
 
     /* Handle log rotation if it was requested */
     if (received_sighup) {
-      truncate_log_file();
-
+      if (truncate_log_file() == -1) {
+	log_message(LOG_NOTICE, "Could not truncate logfile. %m");
+      }
 #ifdef FILTER_ENABLE
       if (config.filter) {
 	filter_destroy();

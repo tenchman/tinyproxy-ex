@@ -40,6 +40,7 @@ tinyproxy_SOURCES = \
 	text.c text.h \
 	tinyproxy.c tinyproxy-ex.h \
 	utils.c utils.h \
+	writev.c writev.h \
 	vector.c vector.h \
 	grammar.y scanner.l \
 	regexp.h
@@ -48,11 +49,6 @@ EXTRA_DIST = gnuregex.c gnuregex.h
 EXTRA_tinyproxy_SOURCES = filter.c filter.h grammar.h
 tinyproxy_DEPENDENCIES = @ADDITIONAL_OBJECTS@
 tinyproxy_LDADD = @ADDITIONAL_OBJECTS@
-
-.c.o:
-	@echo "  Compiling: $*.c"
-	@$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
-	@mv -f $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
 
 scanner.c: scanner.l grammar.h
 	$(LEX) $(LEX_FLAGS) $(LFLAGS) -i $< && mv $(LEX_OUTPUT_ROOT).c $@

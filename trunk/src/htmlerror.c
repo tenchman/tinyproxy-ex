@@ -156,7 +156,7 @@ int send_http_headers(struct conn_s *connptr, int code, char *message)
       "Content-Type: text/html\r\n" "Connection: close\r\n" "\r\n";
 
   return (send_message(connptr->client_fd, headers,
-			code, message, PACKAGE, VERSION));
+		       code, message, PACKAGE, VERSION));
 }
 
 /*
@@ -183,9 +183,9 @@ int send_http_error_message(struct conn_s *connptr)
     error_file = get_html_file(connptr->error_number);
     if (!(infile = fopen(error_file, "r"))) {
       ret = send_message(connptr->client_fd, fallback_error,
-			  connptr->error_string,
-			  PACKAGE, VERSION,
-			  errno, strerror(errno), connptr->error_string);
+			 connptr->error_string,
+			 PACKAGE, VERSION,
+			 errno, strerror(errno), connptr->error_string);
     } else {
       ret = send_html_file(infile, connptr);
       fclose(infile);

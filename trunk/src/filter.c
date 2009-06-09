@@ -423,7 +423,10 @@ int filter_ofcd(const unsigned char *pat, const char *uri, char **status)
 
   iov[0].iov_base = "QUIT";
   iov[0].iov_len = 4;
-  writev(sockfd, iov, 1);
+  if (writev(sockfd, iov, 1) == -1) {
+    /* QUIT failed, ignore it for now */
+    fprintf(stderr, "Failed to writev() to socket! %m\n");
+  }
 
   buf[len] = (char) 0;
   close(sockfd);
@@ -504,7 +507,7 @@ int filter_domain(const char *host, const char *aclname, char **status)
       }
       break;
     case FL_OFCD:
-      result = filter_ofcd(p->pat, host, status);
+      result = filter_ofcd((const unsigned char *) p->pat, host, status);
       if (result == 0)
 	return 2;
       else if (result == 1)

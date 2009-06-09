@@ -1,7 +1,11 @@
 #!/bin/sh
+COPY=--copy
+
+export PATH=/opt/diet/bin:$PATH
 rm -rf autom4te.cache/
-aclocal --force
+
+libtoolize -f --copy
+aclocal
 autoheader
-libtoolize --force
-automake --add-missing
+automake --add-missing --copy
 autoconf

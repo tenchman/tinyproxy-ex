@@ -237,7 +237,7 @@ int http_message_send(http_message_t msg, int fd)
 
   /* Write the response line */
   if (send_message(fd, "HTTP/1.0 %d %s\r\n",
-		    msg->response.code, msg->response.string) < 0)
+		   msg->response.code, msg->response.string) < 0)
     return -1;
 
   /* Go through all the headers */
@@ -251,7 +251,7 @@ int http_message_send(http_message_t msg, int fd)
   strftime(timebuf, sizeof(timebuf), "%a, %d %b %Y %H:%M:%S GMT",
 	   gmtime(&global_time));
   if (send_message(fd, "Date: %s\r\nContent-length: %u\r\n\r\n",
-		    timebuf, msg->body.length) < 0)
+		   timebuf, msg->body.length) < 0)
     return -1;
 
   /* If there's a body, send it! */
