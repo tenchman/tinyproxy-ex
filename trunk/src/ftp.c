@@ -19,6 +19,8 @@
 #ifdef HAVE_ALLOCA_H
 #include <alloca.h>
 #endif
+#include <time.h>		/* strptime */
+#include <netinet/tcp.h>	/* TCP_NODELAY */
 #include "reqs.h"
 #include "network.h"
 #include "conns.h"
@@ -259,7 +261,7 @@ connect_ftp(struct conn_s *connptr, struct request_s *request, char *errbuf,
 	    size_t errbufsize)
 {
   char *tmp, buf[4096];
-  int fd, code, port = 0;
+  int fd, code, port = 0, one = 1;
   char *path, *file, *pathcopy = NULL, host[INET_ADDRSTRLEN];
   long int size;
   char type = 0;
@@ -273,6 +275,12 @@ connect_ftp(struct conn_s *connptr, struct request_s *request, char *errbuf,
 			"error", buf, NULL);
     return -1;
   }
+
+  /* disable Nagle's algorithm for the command channel */
+  if (setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, &one, sizeof(one)) == -1) {
+    log_message(LOG_DEBUG, "setsockopt: unable to set TCP_NODELAY\n");
+  }
+
   if ((code = send_and_receive(fd, NULL, buf, sizeof(buf))) == -1)
     goto COMMON_ERROR_QUIT;
 
