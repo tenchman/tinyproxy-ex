@@ -53,12 +53,19 @@ struct config_s {
   char *config_file;
   unsigned int syslog:1;
   unsigned int quit:1;
-  unsigned reverselookup:1;
+  unsigned int reverselookup:1;
+  unsigned int i18n;
   int connecttimeout;
   int connectretries;
   char *stathost;
   char *username;
   char *group;
+#ifdef I18N_ENABLE
+  struct language_s {
+    char name[18];
+    int16_t qvalue;
+  } **languages;
+#endif
 #ifdef FILTER_ENABLE
   /* path to the ofcd unix domain socket */
   char *ofcdsocket;
@@ -72,6 +79,7 @@ struct config_s {
   unsigned filter_url:1;
   unsigned filter_extended:1;
   unsigned filter_casesensitive:1;
+  unsigned filter_blockunknown:1;
   filter_policy_t default_policy;
 #endif				/* FILTER_ENABLE */
 #ifdef XTINYPROXY_ENABLE

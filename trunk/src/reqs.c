@@ -209,6 +209,19 @@ static void strip_username_password(char *host)
   }
 }
 
+#if 0
+static int extract_accepted_languages(const char *headerline, struct)
+{
+  if (headerline == NULL) {
+    /* do nothing */
+  } else {
+    int len = strlen(headerline);
+    char *copy = alloca(len + 1);
+    memcpy(copy, headerline, len + 1);
+  }
+}
+#endif
+
 /*
  * Pull the information out of the URL line.  This will handle both HTTP
  * and FTP (proxied) URLs.

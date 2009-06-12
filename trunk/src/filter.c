@@ -25,6 +25,7 @@
 #include "log.h"
 #include "regexp.h"
 #include "reqs.h"
+#include <limits.h>
 
 #define FILTER_BUFFER_LEN (512)
 #ifndef UNIX_PATH_MAX
@@ -438,6 +439,11 @@ int filter_ofcd(const unsigned char *pat, const char *uri, char **status)
 
   if (strcmp((char *) buf, "00000000FFFFFFFFFFFFFFFFFFFFFFFF") == 0) {
     log_message(LOG_INFO, "filter_ofcd(): url unknown");
+    if (config.filter_blockunknown) {
+      *status =
+	  "The URL was not found in database and the filter is configured to block such URLs";
+      return 0;
+    }
     return 1;
   }
 
@@ -470,7 +476,7 @@ int filter_ofcd(const unsigned char *pat, const char *uri, char **status)
   }
 
   if (outlen)
-    *status = safestrdup(outbuf);
+    *status = outbuf;
 
   return match;
 

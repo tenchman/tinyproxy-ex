@@ -58,7 +58,7 @@ int yylex(void);
 %token KW_STATPAGE
 %token KW_VIA_PROXY_NAME
 %token KW_ACL
-%token KW_OFCD_SOCKET KW_OFCD_CATEGORIES
+%token KW_OFCD_SOCKET KW_OFCD_CATEGORIES KW_OFCD_BLOCKUNKNOWN
 %token KW_AUTHENTICATION
 
 /* yes/no switches */
@@ -133,6 +133,7 @@ statement
 	| KW_STATPAGE string	{ config.statpage = $2; }
 	| KW_OFCD_SOCKET string		{ config.ofcdsocket = $2; }
 	| KW_OFCD_CATEGORIES string	{ config.ofcdcategories = $2; }
+	| KW_OFCD_BLOCKUNKNOWN yesno    { config.filter_blockunknown = $2; }
 	| KW_ACL string acltype network_addressrange 
 	  { 
 #ifdef FILTER_ENABLE

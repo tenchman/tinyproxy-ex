@@ -61,6 +61,7 @@ static struct keyword keywords[] = {
 	{ "statfile",            KW_STATPAGE },
 	{ "ofcdsocket",		 KW_OFCD_SOCKET },
 	{ "ofcdcategories",	 KW_OFCD_CATEGORIES },
+	{ "ofcdblockunknown",	 KW_OFCD_BLOCKUNKNOWN },
 	{ "acl",		 KW_ACL },
 
         /* loglevel and the settings */
