@@ -177,7 +177,7 @@ int
 http_message_add_headers(http_message_t msg, char **headers, int num_headers)
 {
   char **new_headers;
-  int i;
+  unsigned int i;
 
   /* Check for valid arguments */
   if (msg == NULL)
@@ -209,7 +209,7 @@ http_message_add_headers(http_message_t msg, char **headers, int num_headers)
   /*
    * Add the new headers to the structure
    */
-  for (i = 0; i != num_headers; ++i)
+  for (i = 0; i != (unsigned int)num_headers; ++i)
     msg->headers.strings[i + msg->headers.used] = headers[i];
   msg->headers.used += num_headers;
 
@@ -223,7 +223,7 @@ int http_message_send(http_message_t msg, int fd)
 {
   char timebuf[30];
   time_t global_time;
-  int i;
+  unsigned int i;
 
   assert(is_http_message_valid(msg));
 
