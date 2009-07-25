@@ -61,3 +61,5 @@ uninstall-tinyproxy-html-files:
 uninstall-tinyproxy-configure-file:
 	rm -f $(DESTDIR)@TINYPROXY_CONFIG_DIR@/@TINYPROXY_CONFIG_FILE@-dist
 
+strip:
+	make -C src strip

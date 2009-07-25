@@ -56,6 +56,9 @@ scanner.c: scanner.l grammar.h
 indent:
 	indent -kr -i2 -ts8 -di1 -l80 *.[ch]
 
+strip: all
+	strip -s -R .comment -R .note tinyproxy
+
 clean:
 	rm -f *.da
 	rm -f gmon.out
