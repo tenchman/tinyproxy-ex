@@ -18,6 +18,15 @@
 #ifndef TINYPROXY_NETWORK_H
 #define TINYPROXY_NETWORK_H
 
+#include <netinet/tcp.h>
+#ifdef TCP_CORK
+extern void enable_tcp_cork(int fd);
+extern void disable_tcp_cork(int fd);
+#else
+#define enable_tcp_cork(fd)
+#define disable_tcp_cork(fd)
+#endif
+
 extern ssize_t safe_send(int fd, const char *buffer, size_t count);
 extern ssize_t safe_recv(int fd, char *buffer, size_t count);
 

@@ -25,6 +25,20 @@
 #include "network.h"
 #include "log.h"
 
+#ifdef TCP_CORK
+void enable_tcp_cork(int fd)
+{
+  int state = 1;
+  setsockopt(fd, IPPROTO_TCP, TCP_CORK, &state, sizeof(state));
+}
+
+void disable_tcp_cork(int fd)
+{
+  int state = 0;
+  setsockopt(fd, IPPROTO_TCP, TCP_CORK, &state, sizeof(state));
+}
+#endif
+
 /*
  * Write the buffer to the socket. If an EINTR occurs, pick up and try
  * again. Keep sending until the buffer has been sent.

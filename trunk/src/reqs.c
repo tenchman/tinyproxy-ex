@@ -489,6 +489,7 @@ establish_http_connection(struct conn_s *connptr, struct request_s *request)
   else
     portbuff[0] = '\0';
 
+  enable_tcp_cork(connptr->server_fd);
   return send_message(connptr->server_fd,
 		      "%s %s HTTP/1.0\r\n"
 		      "Host: %s%s\r\n"
@@ -1166,6 +1167,9 @@ process_client_headers(struct conn_s *connptr, hashmap_t hashofheaders)
   if (connptr->upstream_proxy && connptr->upstream_proxy->authentication)
     add_proxy_authentication(connptr);
 
+  /* Disable TCP_CORK to let the kernel send all remaining buffers */
+  disable_tcp_cork(connptr->server_fd);
+
   /* Write the final "blank" line to signify the end of the headers */
   if (safe_send(connptr->server_fd, "\r\n", 2) < 0)
     return -1;
@@ -1258,6 +1262,9 @@ static int process_server_headers(struct conn_s *connptr)
 			NULL);
     return -1;
   }
+  
+  /* Set TCP_CORK option were supported */
+  enable_tcp_cork(connptr->client_fd);
 
   /* Send the saved response line first */
   ret = send_message(connptr->client_fd, "%s\r\n", response_line);
@@ -1306,6 +1313,9 @@ static int process_server_headers(struct conn_s *connptr)
   }
   hashmap_delete(hashofheaders);
 
+  /* Disable TCP_CORK to let the kernel send all remaining buffers */
+  disable_tcp_cork(connptr->client_fd);
+
   /* Write the final blank line to signify the end of the headers */
   if (safe_send(connptr->client_fd, "\r\n", 2) < 0)
     return -1;
@@ -1322,7 +1332,7 @@ ERROR_EXIT:
  * between the two connections. We continue to use the buffering code
  * since we want to be able to buffer a certain amount for slower
  * connections (as this was the reason why I originally modified
- * tinyproxy-ex oh so long ago...)
+ * tinyproxy oh so long ago...)
  *	- rjkaes
  */
 static void relay_connection(struct conn_s *connptr)
