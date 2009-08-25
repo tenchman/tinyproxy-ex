@@ -1,4 +1,13 @@
-Just some ideas
+Just some (unordered) ideas
 
  * SSL interception
   - check polarssl, axtls etc.pp.
+
+ * better FTP support
+  - OK, FTP seems to work most of the time, but it should revised
+
+ * Add support for statistics via RRD files.
+  - It would be usefull to have statistics available to generate some nice
+    usage graphs via rrdtool.
+  - I have to check how to do this because librrd.so has a bunch of
+    dependencies. Maybe I have to implement my own small rrd library.

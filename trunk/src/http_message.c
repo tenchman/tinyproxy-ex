@@ -209,7 +209,7 @@ http_message_add_headers(http_message_t msg, char **headers, int num_headers)
   /*
    * Add the new headers to the structure
    */
-  for (i = 0; i != (unsigned int)num_headers; ++i)
+  for (i = 0; i != (unsigned int) num_headers; ++i)
     msg->headers.strings[i + msg->headers.used] = headers[i];
   msg->headers.used += num_headers;
 

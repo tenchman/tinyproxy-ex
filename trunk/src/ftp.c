@@ -210,21 +210,68 @@ int send_and_receive(int fd, const char *cmd, char *buf, size_t buflen)
   ssize_t len;
   size_t total = 0;
   char *pos = buf, *end, *tmp;
-  int retval = -1;
+  int retval = -1, ret;
+  fd_set sfd;
+  struct timeval tv;
 
-  if (cmd && safe_send(fd, cmd, strlen(cmd)) == -1) {
-    log_message(LOG_WARNING, "Failed to send %s", cmd);
-    return -1;
-  }
+  tv.tv_sec = (long) config.idletimeout;
+  tv.tv_usec = 0;
+
+  if (cmd) {
+#ifdef FTPDEBUG
+    log_message(LOG_INFO, "send_and_receive, Sending command '%.*s'.",
+		strlen(cmd) - 2, cmd);
+#endif
+    FD_ZERO(&sfd);
+    FD_SET(fd, &sfd);
+    switch ((ret = select(fd + 1, NULL, &sfd, NULL, &tv))) {
+    case 0:
+      log_message(LOG_ERR,
+		  "send_and_receive, select() timeout while sending command '%.*s'",
+		  strlen(cmd) - 2, cmd);
+      return -1;
+    case -1:
+      log_message(LOG_ERR,
+		  "send_and_receive, select() error while sending command '%.*s': %m",
+		  strlen(cmd) - 2, cmd);
+      return -1;
+    default:
+      ;
+    }
+
+    if (safe_send(fd, cmd, strlen(cmd)) == -1) {
+      log_message(LOG_WARNING, "Failed to send command '%.*s'", cmd);
+      return -1;
+    }
+  } else
+    log_message(LOG_INFO, "send_and_receive, not sending any command");
 
   /* 
    * really ugly parsing stuff for real long answers,
    * see "ftp.kernel.org" after PASS command
    */
   while (total < buflen) {
+    FD_ZERO(&sfd);
+    FD_SET(fd, &sfd);
+    switch ((ret = select(fd + 1, &sfd, NULL, NULL, &tv))) {
+    case 0:
+      log_message(LOG_ERR, "send_and_receive, select() timeout while reading");
+      return -1;
+    case -1:
+      log_message(LOG_ERR,
+		  "send_and_receive, select() error while reading, %m");
+      return -1;
+    default:
+      ;
+    }
+
+
     len = safe_recv(fd, buf + total, buflen - total);
+#ifdef FTPDEBUG
+    log_message(LOG_INFO, "send_and_receive, Got %d bytes.", len);
+#endif
     if (len == -1) {
-      log_message(LOG_WARNING, "Read error after command %s.", cmd);
+      log_message(LOG_WARNING, "send_and_receive, read error, %m");
       return -1;
     } else if (len == 0)
       break;
@@ -240,6 +287,10 @@ int send_and_receive(int fd, const char *cmd, char *buf, size_t buflen)
        */
       if (isdigit(*pos)) {
 	retval = strtol(pos, &end, 10);
+#ifdef FTPDEBUG
+	log_message(LOG_INFO, "send_and_receive, Got status '%.*s'.", tmp - pos,
+		    pos);
+#endif
 	if (pos != end && *end == ' ')
 	  goto FOUND;
       }
@@ -387,18 +438,6 @@ connect_ftp(struct conn_s *connptr, struct request_s *request, char *errbuf,
     return 0;
   }
 
-  /*
-   * try to get the size of the requested file
-   */
-  if (file) {
-    snprintf(buf, sizeof(buf), "SIZE %s\r\n", file);
-    if ((code = send_and_receive(fd, buf, buf, sizeof(buf))) == -1)
-      goto COMMON_ERROR_QUIT;
-
-    if (code == 213 && (size = strtol(buf + 4, NULL, 10)))
-      connptr->server.content_length = size;
-  }
-
   /* 
    * now get the port for the data connection.
    */
@@ -436,6 +475,19 @@ connect_ftp(struct conn_s *connptr, struct request_s *request, char *errbuf,
     if ((code = send_and_receive(fd, buf, buf, sizeof(buf))) == -1)
       goto COMMON_ERROR_QUIT;
 
+    /*
+     * try to get the size of the requested file
+     */
+    snprintf(buf, sizeof(buf), "SIZE %s\r\n", file);
+    if ((code = send_and_receive(fd, buf, buf, sizeof(buf))) == -1)
+      goto COMMON_ERROR_QUIT;
+
+    if (code == 213 && (size = strtol(buf + 4, NULL, 10)))
+      connptr->server.content_length = size;
+
+    /*
+     * now send the command to retrieve the file
+     */
     snprintf(buf, sizeof(buf), "RETR %s\r\n", file);
     DEBUG2("sending RETR %s", file);
     if ((code = send_and_receive(fd, buf, buf, sizeof(buf))) == -1)

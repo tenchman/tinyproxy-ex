@@ -14,7 +14,7 @@ dnl 8. System services
 dnl
 dnl Read the Autoconf manual for details.
 
-AC_INIT([tinyproxy-ex], [1.6.4.1], [gernot@tenchio.de])
+AC_INIT([tinyproxy-ex], [1.6.4.2], [gernot@tenchio.de])
 AC_CONFIG_SRCDIR([src/tinyproxy.c])
 AC_PREREQ(2.52)
 
@@ -28,6 +28,18 @@ AC_DEFINE_UNQUOTED(TARGET_SYSTEM, ["$target"])
 AM_INIT_AUTOMAKE($PACKAGE_NAME, $PACKAGE_VERSION)
 AM_CONFIG_HEADER(config.h)
 AM_SILENT_RULES([yes])
+
+AC_DEFUN([AM_NLS],
+[
+  AC_MSG_CHECKING([whether NLS is requested])
+  dnl Default is enabled NLS
+  AC_ARG_ENABLE(nls,
+    [  --disable-nls           do not use Native Language Support],
+    USE_NLS=$enableval, USE_NLS=yes)
+  AC_MSG_RESULT($USE_NLS)
+  AC_SUBST(USE_NLS)
+])
+AM_NLS
 
 dnl Check if we're compiling on a weird platform :)
 dnl AC_AIX

@@ -25,6 +25,7 @@
 #include "heap.h"
 #include "log.h"
 #include "stats.h"
+#include "network.h"
 
 struct conn_s *initialize_conn(int client_fd, const char *ipaddr,
 			       const char *string_addr)
@@ -91,14 +92,21 @@ void destroy_conn(struct conn_s *connptr)
 {
   assert(connptr != NULL);
 
-  if (connptr->client_fd != -1)
+  if (connptr->client_fd != -1) {
+    /* flush all remaining data and close the client file descriptor */
+    disable_tcp_cork(connptr->client_fd);
     if (close(connptr->client_fd) < 0)
       log_message(LOG_INFO, "Client (%d) close message: %s",
 		  connptr->client_fd, strerror(errno));
-  if (connptr->server_fd != -1)
+  }
+
+  if (connptr->server_fd != -1) {
+    /* flush all remaining data and close the server file descriptor */
+    disable_tcp_cork(connptr->server_fd);
     if (close(connptr->server_fd) < 0)
       log_message(LOG_INFO, "Server (%d) close message: %s",
 		  connptr->server_fd, strerror(errno));
+  }
 #ifdef FTP_SUPPORT
   if (connptr->server_cfd != -1)
     if (close(connptr->server_cfd) < 0)
