@@ -1079,7 +1079,7 @@ write_via_header(int fd, hashmap_t hashofheaders,
 static int
 process_client_headers(struct conn_s *connptr, hashmap_t hashofheaders)
 {
-  static char *skipheaders[] = {
+  static const char *skipheaders[] = {
     "host",
     "keep-alive",
     "proxy-authenticate",
@@ -1187,7 +1187,7 @@ PULL_CLIENT_DATA:
  */
 static int process_server_headers(struct conn_s *connptr)
 {
-  static char *skipheaders[] = {
+  static const char *skipheaders[] = {
     "keep-alive",
     "proxy-authenticate",
     "proxy-authorization",
