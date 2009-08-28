@@ -1014,7 +1014,7 @@ static uint64_t get_content_length(hashmap_t hashofheaders)
 {
   ssize_t len;
   void *data;
-  long content_length = -1;
+  uint64_t content_length = LENGTH_NONE;
 
   len = hashmap_entry_by_key(hashofheaders, "content-length", &data);
   if (len > 0)
@@ -1175,7 +1175,8 @@ process_client_headers(struct conn_s *connptr, hashmap_t hashofheaders)
    * Spin here pulling the data from the client.
    */
 PULL_CLIENT_DATA:
-  if (connptr->client.content_length != LENGTH_NONE)
+  if (connptr->client.content_length
+      && connptr->client.content_length != LENGTH_NONE)
     return pull_client_data(connptr, connptr->client.content_length);
   else
     return ret;
