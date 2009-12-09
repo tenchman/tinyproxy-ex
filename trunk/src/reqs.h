@@ -28,7 +28,7 @@ struct request_s {
 
   char *host;
   uint16_t port;
-
+  uint16_t pad0;
   char *path;
 };
 
