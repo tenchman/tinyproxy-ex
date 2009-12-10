@@ -94,9 +94,13 @@
 #ifndef NDEBUG
 # define DEBUG1(x)       log_message(LOG_DEBUG, "[%s:%d] " x, __FILE__, __LINE__)
 # define DEBUG2(x, y...) log_message(LOG_DEBUG, "[%s:%d] " x, __FILE__, __LINE__, ## y)
+# define FUNCENTER()	 log_message(LOG_DEBUG, "%s; start", __func__)
+# define FUNCLEAVE()	 log_message(LOG_DEBUG, "%s; finished", __func__)
 #else
 # define DEBUG1(x)       do { } while(0)
 # define DEBUG2(x, y...) do { } while(0)
+# define FUNCENTER()	 do { } while(0)
+# define FUNCLEAVE()	 do { } while(0)
 #endif
 
 extern int open_log_file(const char *file);
