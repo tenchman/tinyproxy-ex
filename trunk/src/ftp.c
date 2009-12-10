@@ -39,6 +39,7 @@
 
 struct ftpinfo_s {
   char type;
+  char pad0[3];
   unsigned long long size;
   char *base;
   char *name;
@@ -58,7 +59,7 @@ static int parsepasv(char *buf, char *host)
    * DJB in contrast uses [http://cr.yp.to/ftp/retr.html]:
    *  "227 =h1,h2,h3,h4,p1,p2"
    */
-  int h1, h2, h3, h4, p1, p2, port;
+  unsigned int h1, h2, h3, h4, p1, p2, port;
   /* skip return code and SP */
   char *tmp = buf + 4;
 
@@ -70,10 +71,10 @@ static int parsepasv(char *buf, char *host)
   } else if (sscanf(tmp, "%u,%u,%u,%u,%u,%u",
 		    &h1, &h2, &h3, &h4, &p1, &p2) != 6) {
     /* err */
-  } else if ((port = p1 * 256 + p2) > 65535 || port < 0) {
+  } else if ((port = p1 * 256 + p2) > 65535) {
     /* err */
   } else {
-    snprintf(host, INET_ADDRSTRLEN, "%d.%d.%d.%d", h1, h2, h3, h4);
+    snprintf(host, INET_ADDRSTRLEN, "%u.%u.%u.%u", h1, h2, h3, h4);
     return port;
   }
   return -1;
