@@ -174,7 +174,7 @@ void *vector_getentry(vector_t vector, size_t pos, size_t * size)
   struct vectorentry_s *ptr;
   size_t loc;
 
-  if (!vector || pos < 0 || pos >= vector->num_entries)
+  if (!vector || pos >= vector->num_entries)
     return NULL;
 
   loc = 0;
