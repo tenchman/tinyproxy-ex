@@ -229,7 +229,12 @@ static int extract_accepted_languages(const char *headerline, struct)
 static int extract_http_url(const char *__url, struct request_s *request)
 {
   int theport = HTTP_PORT;
-  char *url = strstr(__url, "//") + 2;
+  char *url;
+
+  if (NULL == (url = strstr(__url, "//")))
+    goto ERROR_EXIT;
+
+  url += 2;
 
   request->host = safemalloc(strlen(url) + 1);
   request->path = safemalloc(strlen(url) + 1);
