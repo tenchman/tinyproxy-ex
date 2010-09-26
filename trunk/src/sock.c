@@ -144,7 +144,7 @@ int opensock(char *ip_addr, uint16_t port, char *errbuf, size_t errbuflen)
   int sock_fd = -1;
   struct sockaddr_in port_info;
   struct sockaddr_in bind_addr;
-  int ret, retry = 0;
+  int ret, retry = 0, __errno;
 
   assert(ip_addr != NULL);
   assert(errbuf != NULL);
@@ -195,10 +195,12 @@ int opensock(char *ip_addr, uint16_t port, char *errbuf, size_t errbuflen)
     socket_nonblocking(sock_fd);
 
     /* the preferred way out: success! */
-    if ((ret =
+    do {
+      if ((ret =
 	 connect(sock_fd, (struct sockaddr *) &port_info,
 		 sizeof(port_info))) == 0)
       return sock_fd;
+    } while (errno == EINTR);
 
     if (errno == EINPROGRESS) {
       struct timeval tv;

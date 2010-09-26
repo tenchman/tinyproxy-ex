@@ -20,7 +20,7 @@
 
 #include "tinyproxy-ex.h"
 
-#define LENGTH_NONE UINT64_C(0xFFFFFFFFFFFFFFFF)
+#define LENGTH_NONE UINT64_C(-1)
 
 struct param_s {
   unsigned int major;

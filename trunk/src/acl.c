@@ -24,6 +24,8 @@
 #include "log.h"
 #include "sock.h"
 
+#ifdef FILTER_ENABLE
+
 /* linked list of acl definitions */
 struct extacl_s {
   char *aclname;
@@ -296,3 +298,5 @@ find_extacl(const char *ip_address, const char *string_address, char **aclname)
   *aclname = NULL;
   return config.default_policy;
 }
+
+#endif

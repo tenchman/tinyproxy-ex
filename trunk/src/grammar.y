@@ -19,6 +19,8 @@
 
 %{
 
+#include <stdlib.h> /* EXIT_FAILURE */
+#include <stdio.h>  /* printf */
 #include "tinyproxy-ex.h"
 
 #include "acl.h"
@@ -29,9 +31,11 @@
 #include "log.h"
 #include "reqs.h"
 #include "sock.h"
+#include "config.h"
 
 void yyerror(char *s);
 int yylex(void);
+static char *no_filter_support = "Filter support was not compiled in.";	  
 
 %}
 
@@ -131,9 +135,28 @@ statement
 	| KW_ERRORPAGE NUMBER string	{ add_new_errorpage($3, $2); }
 	| KW_DEFAULT_ERRORPAGE string	{ config.errorpage_undef = $2; }
 	| KW_STATPAGE string	{ config.statpage = $2; }
-	| KW_OFCD_SOCKET string		{ config.ofcdsocket = $2; }
-	| KW_OFCD_CATEGORIES string	{ config.ofcdcategories = $2; }
-	| KW_OFCD_BLOCKUNKNOWN yesno    { config.filter_blockunknown = $2; }
+	| KW_OFCD_SOCKET string		
+	  { 
+#ifdef FILTER_ENABLE
+		  config.ofcdsocket = $2; 
+#else
+	          log_message(LOG_WARNING, "Filter support was not compiled in.");	  
+#endif
+	  }
+	| KW_OFCD_CATEGORIES string	{ 
+#ifdef FILTER_ENABLE
+		  config.ofcdcategories = $2; 
+#else
+	          log_message(LOG_WARNING, "Filter support was not compiled in.");	  
+#endif
+	  }
+	| KW_OFCD_BLOCKUNKNOWN yesno    { 
+#ifdef FILTER_ENABLE
+		  config.filter_blockunknown = $2;
+#else
+	          log_message(LOG_WARNING, "Filter support was not compiled in.");	  
+#endif
+	  }
 	| KW_ACL string acltype network_addressrange 
 	  { 
 #ifdef FILTER_ENABLE
@@ -148,7 +171,7 @@ statement
 		  config.filter = 1;
 		  add_new_filter($2, $3);
 #else
-	          log_message(LOG_WARNING, "Filter support was not compiled in.");
+	          log_message(LOG_WARNING, no_filter_support);
 #endif
 	  }
         | KW_FILTERURLS yesno
@@ -156,7 +179,7 @@ statement
 #ifdef FILTER_ENABLE
 		  config.filter_url = $2;
 #else
-		  log_message(LOG_WARNING, "Filter support wss not compiled in.");
+		  log_message(LOG_WARNING, no_filter_support);
 #endif
 	  }
         | KW_FILTEREXTENDED yesno
@@ -164,7 +187,7 @@ statement
 #ifdef FILTER_ENABLE
 		  config.filter_extended = $2;
 #else
-		  log_message(LOG_WARNING, "Filter support was not compiled in.");
+		  log_message(LOG_WARNING, no_filter_support);
 #endif
 	  }
         | KW_FILTER_CASESENSITIVE yesno
@@ -172,7 +195,7 @@ statement
 #ifdef FILTER_ENABLE
 		  config.filter_casesensitive = $2;
 #else
-		  log_message(LOG_WARNING, "Filter support was not compiled in.");
+		  log_message(LOG_WARNING, no_filter_support);
 #endif
 	  }
         | KW_FILTER_DENY yesno
@@ -181,7 +204,7 @@ statement
 		  if ($2)
 			  filter_set_default_policy(FILTER_DENY);
 #else
-		  log_message(LOG_WARNING, "FIlter support was not compiled in.");
+		  log_message(LOG_WARNING, no_filter_support);
 #endif
 	  }
 	| KW_XTINYPROXY network_address

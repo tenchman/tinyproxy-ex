@@ -34,7 +34,7 @@
 
 typedef enum {
   FILTER_ALLOW,
-  FILTER_DENY,
+  FILTER_DENY
 } filter_policy_t;
 
 struct upstream {
@@ -46,15 +46,23 @@ struct upstream {
   in_addr_t ip, mask;
 };
 
-#define USE
-
 struct config_s {
   char *logf_name;
   char *config_file;
-  unsigned int syslog:1;
-  unsigned int quit:1;
-  unsigned int reverselookup:1;
-  unsigned int i18n;
+  unsigned syslog:1;
+  unsigned quit:1;
+  unsigned reverselookup:1;
+  unsigned i18n:1;
+#ifdef FILTER_ENABLE
+  unsigned filter:1;
+  unsigned filter_url:1;
+  unsigned filter_extended:1;
+  unsigned filter_casesensitive:1;
+  unsigned filter_blockunknown:1;
+  unsigned pad0: 23;
+#else
+  unsigned pad0: 28;
+#endif				/* FILTER_ENABLE */
   int connecttimeout;
   int connectretries;
   char *stathost;
@@ -62,8 +70,8 @@ struct config_s {
   char *group;
 #ifdef I18N_ENABLE
   struct language_s {
-    char name[18];
-    int16_t qvalue;
+    char name[20];
+    int qvalue;
   } **languages;
 #endif
 #ifdef FILTER_ENABLE
@@ -75,11 +83,6 @@ struct config_s {
     char *expression;
     char *aclname;
   } **filters;
-  unsigned filter:1;
-  unsigned filter_url:1;
-  unsigned filter_extended:1;
-  unsigned filter_casesensitive:1;
-  unsigned filter_blockunknown:1;
   filter_policy_t default_policy;
 #endif				/* FILTER_ENABLE */
 #ifdef XTINYPROXY_ENABLE
