@@ -1,0 +1,45 @@
+Differences between tinyproxy-1.6.3 and tiynproxy-ex
+----------------------------------------------------
+
+Features only found in tinyproxy-ex
+===================================
+ 
+ * FTP support
+ * Proctitle support
+ * improved logging
+ * Basic ACL support
+
+Changes to the configuration syntax
+===================================
+
+1. ACL syntax
+
+ acl aclname acltype string
+
+ acltype is on of the following types:
+
+ src ipaddress		   single IP address
+ src ipaddress/netmask	   network address
+ src ipaddress-ipaddress   IP address range
+
+  Example: acl mynet src 192.168.1.128/25
+
+2. Filter syntax:
+
+ filter aclname filename
+
+  Example: filter mynet /etc/tinyproxy-ex/filter
+
+3. Filterfile syntax:
+
+ filtertype expression
+
+ where filtertype is on of: allow/deny
+
+  Example:
+
+  # Allow access to ../subdomain
+  allow http://www.somewhere.domain/subdomain/
+  # Deny access to all other subdomains
+  deny http://www.somewhere.domain/.*
+
