@@ -1,0 +1,19 @@
+How to build tinyproxy-ex?
+--------------------------
+
+Prerequisites
+=============
+
+In order to build tinyproxy-ex you need http://www.cmake.org/[CMAKE].
+
+Build
+=====
+
+------------------------------------------------------------
+tar -xf tinyproxy-ex-XYZ.tar.gz
+mkdir tinyproxy-ex-build
+cd tinyproxy-ex-build
+cmake ../tinyproxy-ex-XYZ
+cmake ../tinyproxy-ex-XYZ # yes, you have it to run twice
+make
+------------------------------------------------------------

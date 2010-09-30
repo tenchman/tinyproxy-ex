@@ -397,13 +397,13 @@ void child_main_loop(void)
       if (truncate_log_file() == -1) {
 	log_message(LOG_NOTICE, "Could not truncate logfile. %m");
       }
-#ifdef FILTER_ENABLE
+#ifdef FILTER_SUPPORT
       if (config.filter) {
 	filter_destroy();
 	filter_init();
       }
       log_message(LOG_NOTICE, "Re-reading filter file.");
-#endif				/* FILTER_ENABLE */
+#endif				/* FILTER_SUPPORT */
 
       received_sighup = FALSE;
     }

@@ -1,8 +1,14 @@
 Differences between tinyproxy-1.6.3 and tiynproxy-ex
-----------------------------------------------------
+====================================================
+
+************************************************************************
+This document tries to explain some differences between +tinyproxy-1.6.3+
+-- which this project is based on -- and +tiynproxy-ex+.
+************************************************************************
+
 
 Features only found in tinyproxy-ex
-===================================
+-----------------------------------
  
  * FTP support
  * Proctitle support
@@ -10,36 +16,54 @@ Features only found in tinyproxy-ex
  * Basic ACL support
 
 Changes to the configuration syntax
-===================================
+-----------------------------------
 
 1. ACL syntax
+~~~~~~~~~~~~~
 
- acl aclname acltype string
+*acl* aclname acltype string
 
- acltype is on of the following types:
+Where +acltype+ is at the moment only the following type:
 
- src ipaddress		   single IP address
- src ipaddress/netmask	   network address
- src ipaddress-ipaddress   IP address range
+* src
+** ip address
+** network address
+** ip address range
 
-  Example: acl mynet src 192.168.1.128/25
+Examples:
+^^^^^^^^
 
-2. Filter syntax:
+  acl myip  src 192.168.1.133
+  acl mynet src 192.168.1.128/25
+  acl mynet src 192.168.1.134-192.168.1.200
 
- filter aclname filename
+2. Filter syntax
+~~~~~~~~~~~~~~~~
 
-  Example: filter mynet /etc/tinyproxy-ex/filter
+*filter* aclname filterfile
 
-3. Filterfile syntax:
+Example:
+^^^^^^^^
 
- filtertype expression
+  filter mynet /etc/tinyproxy-ex/filter
 
- where filtertype is on of: allow/deny
+3. Filterfile syntax
+~~~~~~~~~~~~~~~~~~~~
 
-  Example:
+*filtertype* expression
 
-  # Allow access to ../subdomain
-  allow http://www.somewhere.domain/subdomain/
-  # Deny access to all other subdomains
-  deny http://www.somewhere.domain/.*
+Where +filtertype+ is on of
 
+* allow
+* deny
+
+Example:
+^^^^^^^^
+
+source.c
+ # Allow access to ../subdomain
+ allow http://www.somewhere.domain/subdomain/
+ # Deny access to all other subdomains
+ deny http://www.somewhere.domain/.*
+
+# build html with: asciidoc differences_to_tinyproxy.txt

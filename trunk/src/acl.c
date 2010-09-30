@@ -24,7 +24,7 @@
 #include "log.h"
 #include "sock.h"
 
-#ifdef FILTER_ENABLE
+#ifdef FILTER_SUPPORT
 
 /* linked list of acl definitions */
 struct extacl_s {

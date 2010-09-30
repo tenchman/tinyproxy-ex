@@ -20,6 +20,8 @@
 
 #include "tinyproxy-ex.h"
 
+#ifdef FILTER_SUPPORT
+
 #include "filter.h"
 #include "heap.h"
 #include "log.h"
@@ -530,3 +532,5 @@ COMMON_EXIT:
   else
     return 1;
 }
+
+#endif

@@ -726,7 +726,7 @@ static struct request_s *process_request(struct conn_s *connptr,
     log_message(LOG_DEBUG, "Request for a local file.");
     connptr->local_request = TRUE;
   }
-#ifdef FILTER_ENABLE
+#ifdef FILTER_SUPPORT
   /*
    * Filter restricted domains/urls, skip local requests
    */

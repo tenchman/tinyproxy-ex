@@ -134,9 +134,9 @@ Options:\n\
 #ifdef XTINYPROXY_ENABLE
   printf("    XTinyproxy Header\n");
 #endif				/* XTINYPROXY */
-#ifdef FILTER_ENABLE
+#ifdef FILTER_SUPPORT
   printf("    Filtering\n");
-#endif				/* FILTER_ENABLE */
+#endif				/* FILTER_SUPPORT */
 #ifndef NDEBUG
   printf("    Debugging code\n");
 #endif				/* NDEBUG */
@@ -303,10 +303,10 @@ int main(int argc, char **argv)
     fprintf(stderr, "%s: Could not set the \"SIGPIPE\" signal.\n", argv[0]);
     exit(EX_OSERR);
   }
-#ifdef FILTER_ENABLE
+#ifdef FILTER_SUPPORT
   if (config.filter)
     filter_init();
-#endif				/* FILTER_ENABLE */
+#endif				/* FILTER_SUPPORT */
 
   /*
    * Start listening on the selected port.
@@ -409,10 +409,10 @@ int main(int argc, char **argv)
 		"Could not remove PID file \"%s\": %s.",
 		config.pidpath, strerror(errno));
   }
-#ifdef FILTER_ENABLE
+#ifdef FILTER_SUPPORT
   if (config.filter)
     filter_destroy();
-#endif				/* FILTER_ENABLE */
+#endif				/* FILTER_SUPPORT */
 
   if (config.syslog)
     closelog();

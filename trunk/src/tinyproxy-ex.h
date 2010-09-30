@@ -53,7 +53,7 @@ struct config_s {
   unsigned quit:1;
   unsigned reverselookup:1;
   unsigned i18n:1;
-#ifdef FILTER_ENABLE
+#ifdef FILTER_SUPPORT
   unsigned filter:1;
   unsigned filter_url:1;
   unsigned filter_extended:1;
@@ -62,7 +62,7 @@ struct config_s {
   unsigned pad0: 23;
 #else
   unsigned pad0: 28;
-#endif				/* FILTER_ENABLE */
+#endif				/* FILTER_SUPPORT */
   int connecttimeout;
   int connectretries;
   char *stathost;
@@ -74,7 +74,7 @@ struct config_s {
     int qvalue;
   } **languages;
 #endif
-#ifdef FILTER_ENABLE
+#ifdef FILTER_SUPPORT
   /* path to the ofcd unix domain socket */
   char *ofcdsocket;
   /* path to a file containing the ofcd category descriptions */
@@ -84,7 +84,7 @@ struct config_s {
     char *aclname;
   } **filters;
   filter_policy_t default_policy;
-#endif				/* FILTER_ENABLE */
+#endif				/* FILTER_SUPPORT */
 #ifdef XTINYPROXY_ENABLE
   char *my_domain;
 #endif
