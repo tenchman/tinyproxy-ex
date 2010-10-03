@@ -36,28 +36,28 @@ Timeout 600
 # occurs.  You will probably need to customize the location to your
 # particular install.  The usual locations to check are:
 #   /usr/local/share/tinyproxy
-#   /usr/share/tinyproxy
+#   @DATAROOTDIR@/tinyproxy
 #   /etc/tinyproxy
 #
-# ErrorFile 404 "/usr/share/tinyproxy-ex/404.html"
-# ErrorFile 400 "/usr/share/tinyproxy-ex/400.html"
-# ErrorFile 503 "/usr/share/tinyproxy-ex/503.html"
-ErrorFile 403 "/usr/share/tinyproxy-ex/403.html"
-# ErrorFile 408 "/usr/share/tinyproxy-ex/408.html"
+# ErrorFile 404 "@DATAROOTDIR@/tinyproxy-ex/404.html"
+# ErrorFile 400 "@DATAROOTDIR@/tinyproxy-ex/400.html"
+# ErrorFile 503 "@DATAROOTDIR@/tinyproxy-ex/503.html"
+ErrorFile 403 "@DATAROOTDIR@/tinyproxy-ex/403.html"
+# ErrorFile 408 "@DATAROOTDIR@/tinyproxy-ex/408.html"
 
 # 
 # DefaultErrorFile: The HTML file that gets sent if there is no
 # HTML file defined with an ErrorFile keyword for the HTTP error
 # that has occured.
 #
-DefaultErrorFile "/usr/share/tinyproxy-ex/default.html"
+DefaultErrorFile "@DATAROOTDIR@/tinyproxy-ex/default.html"
 
 #
 # StatFile: The HTML file that gets sent when a request is made
 # for the stathost.  If this file doesn't exist a basic page is
 # hardcoded in tinyproxy.
 #
-StatFile "/usr/share/tinyproxy-ex/stats.html"
+StatFile "@DATAROOTDIR@/tinyproxy-ex/stats.html"
 
 #
 # Where to log the information. Either LogFile or Syslog should be set,

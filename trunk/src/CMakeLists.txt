@@ -32,3 +32,5 @@ ADD_EXECUTABLE(tinyproxy
 	vector.c
 	filter.c
 )
+
+
