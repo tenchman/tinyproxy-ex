@@ -1698,6 +1698,8 @@ send_error:
     goto COMMON_EXIT;
   }
 
+  disable_tcp_cork(connptr->server_fd);
+  
   if (connptr->method == METH_HTTP || (connptr->upstream_proxy != NULL)) {
     if (process_server_headers(connptr) < 0) {
       if (connptr->error_variables)
