@@ -1355,9 +1355,8 @@ static void relay_connection(struct conn_s *connptr)
 #endif
 
   for (;;) {
-    long tdiff = (long) last_access - (long) time(NULL);
+    long tdiff = (long) time(NULL) - (long) last_access;
 
-    /* prevent a race condition between two time() calls */
     if (tdiff >= (long) config.idletimeout) {
       log_message(LOG_INFO,
 		  "Idle Timeout (after select) as %li > %u.",
