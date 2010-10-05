@@ -5,6 +5,7 @@ Just some (unordered) ideas
 
  * better FTP support
   - OK, FTP seems to work most of the time, but it should revised
+    - example: ftp://ftp.gnome.org/mirror/bittornado/icons/index.php
 
  * Add support for statistics via RRD files.
   - It would be usefull to have statistics available to generate some nice
