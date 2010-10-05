@@ -199,12 +199,24 @@ int send_ftp_response(struct conn_s *connptr)
   return writev(connptr->client_fd, iov, n);
 }
 
+static void log_error(char *buf, size_t n, const char *fmt, ...)
+{
+  va_list args;
+  
+  va_start(args, fmt);
+  vsnprintf(buf, n, fmt, args);
+  log_message(LOG_ERR, "%s", buf);
+  va_end(args);
+}
+
 /*
  * Send a FTP-command to 'fd' and read the answer into 'buf'. We do some
  * parsing magic for 'motd' and other ugly things. If 'cmd' is omitted
  * (NULL), we only read the answer (i.e. after the initial connect).
  * 
  * TODO: Inform the caller if the buffer was to small.
+ *
+ * Errors are reported in buf.
  */
 int send_and_receive(int fd, const char *cmd, char *buf, size_t buflen)
 {
@@ -227,12 +239,12 @@ int send_and_receive(int fd, const char *cmd, char *buf, size_t buflen)
     FD_SET(fd, &sfd);
     switch ((ret = select(fd + 1, NULL, &sfd, NULL, &tv))) {
     case 0:
-      log_message(LOG_ERR,
+      log_error(buf, buflen,
 		  "send_and_receive, select() timeout while sending command '%.*s'",
 		  strlen(cmd) - 2, cmd);
       return -1;
     case -1:
-      log_message(LOG_ERR,
+      log_error(buf, buflen,
 		  "send_and_receive, select() error while sending command '%.*s': %m",
 		  strlen(cmd) - 2, cmd);
       return -1;
@@ -241,7 +253,7 @@ int send_and_receive(int fd, const char *cmd, char *buf, size_t buflen)
     }
 
     if (safe_send(fd, cmd, strlen(cmd)) == -1) {
-      log_message(LOG_WARNING, "Failed to send command '%.*s'", cmd);
+      log_error(buf, buflen, "Failed to send command '%.*s'", cmd);
       return -1;
     }
   } else
@@ -256,10 +268,10 @@ int send_and_receive(int fd, const char *cmd, char *buf, size_t buflen)
     FD_SET(fd, &sfd);
     switch ((ret = select(fd + 1, &sfd, NULL, NULL, &tv))) {
     case 0:
-      log_message(LOG_ERR, "send_and_receive, select() timeout while reading");
+      log_error(buf, buflen, "send_and_receive, select() timeout while reading");
       return -1;
     case -1:
-      log_message(LOG_ERR,
+      log_error(buf, buflen,
 		  "send_and_receive, select() error while reading, %m");
       return -1;
     default:
@@ -269,10 +281,10 @@ int send_and_receive(int fd, const char *cmd, char *buf, size_t buflen)
 
     len = safe_recv(fd, buf + total, buflen - total);
 #ifdef FTPDEBUG
-    log_message(LOG_INFO, "send_and_receive, Got %d bytes.", len);
+    log_message(LOG_INFO, "send_and_receive, got %d bytes.", len);
 #endif
     if (len == -1) {
-      log_message(LOG_WARNING, "send_and_receive, read error, %m");
+      log_error(buf, buflen, "send_and_receive, read error, %m");
       return -1;
     } else if (len == 0)
       break;
@@ -289,7 +301,7 @@ int send_and_receive(int fd, const char *cmd, char *buf, size_t buflen)
       if (isdigit(*pos)) {
 	retval = strtol(pos, &end, 10);
 #ifdef FTPDEBUG
-	log_message(LOG_INFO, "send_and_receive, Got status '%.*s'.", tmp - pos,
+	log_message(LOG_INFO, "send_and_receive, got status '%.*s'.", tmp - pos,
 		    pos);
 #endif
 	if (pos != end && *end == ' ')
