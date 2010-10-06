@@ -1,19 +1,33 @@
-How to build tinyproxy-ex?
---------------------------
+Building tinyproxy-ex
+---------------------
 
 Prerequisites
 =============
 
-In order to build tinyproxy-ex you need http://www.cmake.org/[CMAKE].
+In order to build tinyproxy-ex you need the following packages
+
+* cmake
+* make
+* binutils
+* gcc
+* flex
+* bison
+* glibc develpment files 
+* dietlibc (optional, not tested with vanilla dietlibc)
+
+Getting the sources
+===================
+
+git clone git://tinyproxy-ex.git.sourceforge.net/gitroot/tinyproxy-ex/tinyproxy-ex tpex
 
 Build
 =====
-
 ------------------------------------------------------------
-tar -xf tinyproxy-ex-XYZ.tar.gz
-mkdir tinyproxy-ex-build
-cd tinyproxy-ex-build
-cmake ../tinyproxy-ex-XYZ
-cmake ../tinyproxy-ex-XYZ # yes, you have it to run twice
+
+mkdir tpex-build
+cd tpex-build
+cmake ../tpex
+cmake ../tpex # yes, you have it to run twice
 make
+sudo make install
 ------------------------------------------------------------
