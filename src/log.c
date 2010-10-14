@@ -44,6 +44,7 @@ static char *syslog_level[] = {
  * Global file descriptor for the log file
  */
 int log_file_fd = -1;
+int access_log_fd = -1;
 
 /*
  * Store the log level setting.

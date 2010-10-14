@@ -23,11 +23,11 @@ git clone git://tinyproxy-ex.git.sourceforge.net/gitroot/tinyproxy-ex/tinyproxy-
 Build
 =====
 ------------------------------------------------------------
-
 mkdir tpex-build
 cd tpex-build
 cmake ../tpex
-cmake ../tpex # yes, you have it to run twice
 make
 sudo make install
 ------------------------------------------------------------
+
+

@@ -7,6 +7,7 @@ sys/time.h
 sys/uio.h
 sys/un.h
 sys/wait.h
+sys/stat.h
 arpa/inet.h
 netinet/in.h
 alloca.h
@@ -20,6 +21,7 @@ libintl.h
 netdb.h
 pwd.h
 regex.h
+unistd.h
 signal.h
 stdarg.h
 stddef.h

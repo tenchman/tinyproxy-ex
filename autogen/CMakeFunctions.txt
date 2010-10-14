@@ -1,0 +1,8 @@
+ftruncate
+setrlimit
+regexec
+mempcpy
+strlcpy
+strlcat
+writev
+isascii
