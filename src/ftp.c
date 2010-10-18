@@ -47,6 +47,23 @@ struct ftpinfo_s {
   char *link;			/* never free link, it is only a pointer into name */
 };
 
+static int parseaddr(char *c, unsigned char dst[6])
+{
+  unsigned long n;
+  int i;
+  char *end;
+
+  for (i = 0; i < 6; i++) {
+    n = strtoul(c, &end, 10);
+    if ((i < 5 && *end != ',') || n > 255)
+      goto fail;
+    dst[i] = (char)n;
+    c = end + 1;
+  }
+fail:
+  return i;
+}
+
 /*
  * get ip address and port for the data connection, the buffer
  * 'host' must be large enough to hold a ipv4 address
@@ -59,25 +76,24 @@ static int parsepasv(char *buf, char *host)
    * DJB in contrast uses [http://cr.yp.to/ftp/retr.html]:
    *  "227 =h1,h2,h3,h4,p1,p2"
    */
-  unsigned int h1, h2, h3, h4, p1, p2, port;
+  unsigned char addr[6];
   /* skip return code and SP */
   char *tmp = buf + 4;
+  int port = -1;
 
   /* advance to the first digit */
   while (*tmp && !(isdigit(*++tmp)));
 
   if (!*tmp) {
     /* err */
-  } else if (sscanf(tmp, "%u,%u,%u,%u,%u,%u",
-		    &h1, &h2, &h3, &h4, &p1, &p2) != 6) {
+  } else if (6 != parseaddr(tmp, addr)) {
     /* err */
-  } else if ((port = p1 * 256 + p2) > 65535) {
-    /* err */
+  } else if ((port = addr[4] * 256 + addr[5]) > 65535) {
+    port = -1;
   } else {
-    snprintf(host, INET_ADDRSTRLEN, "%u.%u.%u.%u", h1, h2, h3, h4);
-    return port;
+    snprintf(host, INET_ADDRSTRLEN, "%u.%u.%u.%u", addr[0], addr[1], addr[2], addr[3]);
   }
-  return -1;
+  return port;
 }
 
 static inline char tohex(char c)
