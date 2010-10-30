@@ -528,9 +528,7 @@ static struct request_s *process_request(struct conn_s *connptr,
 {
   char *url;
   struct request_s *request;
-
   int ret;
-
   size_t request_len;
 
   /* NULL out all the fields so frees don't cause segfaults. */
@@ -541,11 +539,11 @@ static struct request_s *process_request(struct conn_s *connptr,
   request_len = strlen(connptr->request_line) + 1;
 
   request->method = safemalloc(request_len);
-  url = safemalloc(request_len);
   request->protocol = safemalloc(request_len);
+  
+  url = alloca(request_len);
 
   if (!request->method || !url || !request->protocol) {
-    safefree(url);
     free_request_struct(request);
 
     return NULL;
@@ -562,7 +560,6 @@ static struct request_s *process_request(struct conn_s *connptr,
 			"detail", "Request has an invalid format",
 			"url", url, NULL);
 
-    safefree(url);
     free_request_struct(request);
 
     return NULL;
@@ -594,7 +591,6 @@ static struct request_s *process_request(struct conn_s *connptr,
       indicate_http_error(connptr, 400, "Bad Request",
 			  "detail", "Could not parse URL", "url", url, NULL);
 
-      safefree(url);
       free_request_struct(request);
 
       return NULL;
@@ -611,7 +607,6 @@ static struct request_s *process_request(struct conn_s *connptr,
       indicate_http_error(connptr, 400, "Bad Request",
 			  "detail", "Could not parse URL", "url", url, NULL);
 
-      safefree(url);
       free_request_struct(request);
 
       return NULL;
@@ -624,7 +619,6 @@ static struct request_s *process_request(struct conn_s *connptr,
 			  "with the port you tried to use.", "url", url, NULL);
       log_message(LOG_INFO, "Refused CONNECT method on port %d", request->port);
 
-      safefree(url);
       free_request_struct(request);
 
       return NULL;
@@ -656,7 +650,6 @@ static struct request_s *process_request(struct conn_s *connptr,
 		    connptr->client_fd);
 	indicate_http_error(connptr, 400, "Bad Request", "detail",
 			    "Unknown destination", "url", url, NULL);
-	safefree(url);
 	free_request_struct(request);
 	return NULL;
       }
@@ -665,7 +658,6 @@ static struct request_s *process_request(struct conn_s *connptr,
       request->port = ntohs(dest_addr.sin_port);
       request->path = safemalloc(strlen(url) + 1);
       strcpy(request->path, url);
-      safefree(url);
       build_url(&url, request->host, request->port, request->path);
       log_message(LOG_INFO,
 		  "process_request: trans IP %s %s for %d",
@@ -679,7 +671,6 @@ static struct request_s *process_request(struct conn_s *connptr,
       }
       request->path = safemalloc(strlen(url) + 1);
       strcpy(request->path, url);
-      safefree(url);
       build_url(&url, request->host, request->port, request->path);
       log_message(LOG_INFO,
 		  "process_request: trans Host %s %s for %d",
@@ -693,7 +684,6 @@ static struct request_s *process_request(struct conn_s *connptr,
 			  "detail",
 			  "You tried to connect to the machine the proxy is running on",
 			  "url", url, NULL);
-      safefree(url);
       free_request_struct(request);
       return NULL;
     }
@@ -704,7 +694,6 @@ static struct request_s *process_request(struct conn_s *connptr,
     indicate_http_error(connptr, 400, "Bad Request",
 			"detail", "Unknown URL type", "url", url, NULL);
 
-    safefree(url);
     free_request_struct(request);
 
     return NULL;
@@ -719,7 +708,6 @@ static struct request_s *process_request(struct conn_s *connptr,
   if (config.stathost && strcmp(config.stathost, request->host) == 0) {
     log_message(LOG_DEBUG, "Request for the stathost.");
     connptr->show_stats = TRUE;
-    safefree(url);
     free_request_struct(request);
     return NULL;
   } else if (strcmp(INTERNALNAME, request->host) == 0) {
@@ -775,7 +763,6 @@ static struct request_s *process_request(struct conn_s *connptr,
 			    "detail", "The request you made has been filtered.",
 			    "url", url, NULL);
       }
-      safefree(url);
       safefree(status);
       free_request_struct(request);
 
@@ -785,7 +772,6 @@ static struct request_s *process_request(struct conn_s *connptr,
 #endif
 ALLOWED:
 
-  safefree(url);
 
   /*
    * Break apart the protocol and update the connection structure.
