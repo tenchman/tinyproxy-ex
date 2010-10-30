@@ -341,7 +341,7 @@ connect_ftp(struct conn_s *connptr, struct request_s *request, char *errbuf,
 	    size_t errbufsize)
 {
   char *tmp, buf[4096];
-  int fd, code, port = 0, one = 1;
+  int connected = 0, fd, code, port = 0, one = 1;
   char *path, *file, *pathcopy = NULL, host[INET_ADDRSTRLEN];
   long int size;
   char type = 0;
@@ -363,6 +363,8 @@ connect_ftp(struct conn_s *connptr, struct request_s *request, char *errbuf,
 
   if ((code = send_and_receive(fd, NULL, buf, sizeof(buf))) == -1)
     goto COMMON_ERROR_QUIT;
+
+  connected = 1;
 
   if (code != 220) {
     log_message(LOG_WARNING, "Connect: Unexpected answer: %s", buf);
@@ -555,7 +557,8 @@ connect_ftp(struct conn_s *connptr, struct request_s *request, char *errbuf,
 COMMON_ERROR_QUIT:
   if (errbuf && errbufsize)
     strncpy(errbuf, buf, errbufsize - 1);
-  send_and_receive(fd, "QUIT\r\n", buf, sizeof(buf));
+  if (connected)
+    send_and_receive(fd, "QUIT\r\n", buf, sizeof(buf));
   safefree(pathcopy);
   if (connptr->server_fd != -1)
     close(connptr->server_fd);
