@@ -7,6 +7,7 @@ CMAKE_FUNC="autogen/CMakeFunctions.txt"
 echo -n > $CHECK_INC
 echo -n > $CHECK_FUNC
 
+echo "creating $CONFIG_H_IN"
 cat >$CONFIG_H_IN<<__
 #ifndef _CONFIG_H
 #define _CONFIG_H 1
@@ -30,6 +31,7 @@ cat >$CONFIG_H_IN<<__
 
 __
 
+echo "creating $CHECK_INC"
 while read head tail
 do
   up=`echo $head | sed -e "s:[\./]:_:g" | tr '[:lower:]' '[:upper:]'`
@@ -46,6 +48,7 @@ cat >>$CONFIG_H_IN<<__
 
 __
 
+echo "creating $CHECK_FUNC"
 while read head tail
 do
   up=`echo $head | sed -e "s:[\./]:_:g" | tr '[:lower:]' '[:upper:]'`
