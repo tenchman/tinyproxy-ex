@@ -86,8 +86,6 @@ static vector_t ports_allowed_by_connect = NULL;
  */
 void add_connect_port_allowed(int port)
 {
-  void *ptr = (void *) port;
-
   if (!ports_allowed_by_connect) {
     ports_allowed_by_connect = vector_create();
     if (!ports_allowed_by_connect) {
@@ -99,7 +97,7 @@ void add_connect_port_allowed(int port)
 
   log_message(LOG_INFO, "Adding Port [%d] to the list allowed by CONNECT",
 	      port);
-  vector_append(ports_allowed_by_connect, &ptr, sizeof(port));
+  vector_append(ports_allowed_by_connect, &port, sizeof(port));
 }
 
 /*

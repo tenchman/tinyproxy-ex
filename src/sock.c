@@ -142,26 +142,28 @@ COMMON_EXIT:
 int opensock(char *ip_addr, uint16_t port, char *errbuf, size_t errbuflen)
 {
   int sock_fd = -1;
+  struct addrinfo hints;
+  struct addrinfo *rp;
+
   struct sockaddr_in port_info;
   struct sockaddr_in bind_addr;
+
   int ret, retry = 0, __errno;
+  char service[6];
 
   assert(ip_addr != NULL);
   assert(errbuf != NULL);
   assert(errbuflen > 0);
   assert(port > 0);
 
-  memset((struct sockaddr *) &port_info, 0, sizeof(port_info));
+  snprintf(service, 6, "%hu", port);
 
-  port_info.sin_family = AF_INET;
+  hints.ai_family = AF_UNSPEC;
+  hints.ai_socktype = SOCK_STREAM;
+  hints.ai_protocol = IPPROTO_TCP;
 
-  /* Lookup and return the address if possible */
-  ret = lookup_domain(&port_info.sin_addr, ip_addr, errbuf, errbuflen);
-
-  if (ret < 0)
+  if (0 != getaddrinfo(ip_addr, service, &hints, &rp))
     goto COMMON_ERROR;
-
-  port_info.sin_port = htons(port);
 
   /*
    * try to connect to the given address 'config.connectretries' times
@@ -171,12 +173,13 @@ int opensock(char *ip_addr, uint16_t port, char *errbuf, size_t errbuflen)
    */
   while (config.connectretries > retry) {
 
-    if ((sock_fd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
+    if ((sock_fd = socket(rp->ai_family, rp->ai_socktype,rp->ai_protocol)) == -1) {
       snprintf(errbuf, errbuflen, "socket() error \"%s\".", strerror(errno));
       log_message(LOG_ERR, "opensock: %s", errbuf);
       return -1;
     }
 
+#if 0
     /* Bind to the specified address */
     if (config.bind_address) {
       memset(&bind_addr, 0, sizeof(bind_addr));
@@ -191,13 +194,13 @@ int opensock(char *ip_addr, uint16_t port, char *errbuf, size_t errbuflen)
 	goto COMMON_ERROR;
       }
     }
+#endif
 
     socket_nonblocking(sock_fd);
 
     /* the preferred way out: success! */
     do {
-      if ((ret =
-	 connect(sock_fd, (struct sockaddr *) &port_info,
+      if ((ret = connect(sock_fd, (struct sockaddr *) &port_info,
 		 sizeof(port_info))) == 0)
       return sock_fd;
     } while (errno == EINTR);
