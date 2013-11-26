@@ -148,7 +148,7 @@ int opensock(char *ip_addr, uint16_t port, char *errbuf, size_t errbuflen)
   struct sockaddr_in port_info;
   struct sockaddr_in bind_addr;
 
-  int ret, retry = 0, __errno;
+  int r, ret, retry = 0, __errno;
   char service[6];
 
   assert(ip_addr != NULL);
@@ -163,8 +163,10 @@ int opensock(char *ip_addr, uint16_t port, char *errbuf, size_t errbuflen)
   hints.ai_socktype = SOCK_STREAM;
   hints.ai_protocol = IPPROTO_TCP;
 
-  if (0 != getaddrinfo(ip_addr, service, &hints, &rp))
+  if (0 != (r = getaddrinfo(ip_addr, service, &hints, &rp))) {
+    snprintf(errbuf, errbuflen, "getaddrinfo() error \"%s\".", gai_strerror(r));
     goto COMMON_ERROR;
+  }
 
   /*
    * try to connect to the given address 'config.connectretries' times
@@ -220,6 +222,7 @@ int opensock(char *ip_addr, uint16_t port, char *errbuf, size_t errbuflen)
 	snprintf(errbuf, errbuflen, "socket() error \"%s\".", strerror(errno));
 	goto COMMON_ERROR;
       case 0:
+	snprintf(errbuf, errbuflen, "connect() timeout.");
 	break;
       default:
 	if (FD_ISSET(sock_fd, &fds)) {
@@ -228,12 +231,13 @@ int opensock(char *ip_addr, uint16_t port, char *errbuf, size_t errbuflen)
 	}
 	break;
       }
+    } else {
+      snprintf(errbuf, errbuflen, "socket() error \"%s\".", strerror(errno));
     }
     close(sock_fd);
     sock_fd = -1;
     retry++;
   }
-  snprintf(errbuf, errbuflen, "connect() timeout.");
 
 COMMON_ERROR:
 
