@@ -158,6 +158,7 @@ int opensock(char *ip_addr, uint16_t port, char *errbuf, size_t errbuflen)
 
   snprintf(service, 6, "%hu", port);
 
+  memset(&hints, 0, sizeof(hints));
   hints.ai_family = AF_UNSPEC;
   hints.ai_socktype = SOCK_STREAM;
   hints.ai_protocol = IPPROTO_TCP;
