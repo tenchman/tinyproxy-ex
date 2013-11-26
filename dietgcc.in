@@ -1,3 +1,3 @@
 #!/bin/sh
 
-exec @DIET@ gcc "$@"
+exec @DIET@ gcc -DNDEBUG "$@"
