@@ -203,8 +203,8 @@ int opensock(char *ip_addr, uint16_t port, char *errbuf, size_t errbuflen)
 
     /* the preferred way out: success! */
     do {
-      if ((ret = connect(sock_fd, (struct sockaddr *) &port_info,
-		 sizeof(port_info))) == 0)
+      if ((ret = connect(sock_fd, (struct sockaddr *) rp->ai_addr,
+		  rp->ai_addrlen)) == 0)
       return sock_fd;
     } while (errno == EINTR);
 
