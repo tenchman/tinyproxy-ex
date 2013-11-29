@@ -125,6 +125,43 @@ COMMON_EXIT:
   return retval;
 }
 
+static int do_connect(int sock_fd, struct addrinfo *rp, char *errbuf, size_t errbuflen)
+{
+  int ret = -1;
+  socket_nonblocking(sock_fd);
+  do {
+    if (0 == (ret = connect(sock_fd, (struct sockaddr *) rp->ai_addr, rp->ai_addrlen))) {
+      /* success */
+    } else if (EINTR == errno) {
+      continue;
+    } else if (EINPROGRESS != errno) {
+      snprintf(errbuf, errbuflen, "socket() error \"%s\".", strerror(errno));
+    } else {
+      struct timeval tv;
+      fd_set fds;
+
+      FD_ZERO(&fds);
+      FD_SET(sock_fd, &fds);
+      tv.tv_sec = config.connecttimeout;
+      tv.tv_usec = 0;
+
+      switch ((ret = select(sock_fd + 1, NULL, &fds, NULL, &tv))) {
+      case -1:
+	snprintf(errbuf, errbuflen, "socket() error \"%s\".", strerror(errno));
+	break;
+      case 0:
+	snprintf(errbuf, errbuflen, "connection timeout.");
+	break;
+      default:
+	ret = 0;
+      }
+    }
+    break;
+  } while(1);
+  socket_blocking(sock_fd);
+  return ret;
+}
+
 /* This routine is so old I can't even remember writing it.  But I do
  * remember that it was an .h file because I didn't know putting code in a
  * header was bad magic yet.  anyway, this routine opens a connection to a
@@ -139,19 +176,18 @@ COMMON_EXIT:
  * Rewrote the whole thing to use nonblocking connect
  *	- tenchio
  */
-int opensock(char *ip_addr, uint16_t port, char *errbuf, size_t errbuflen)
+int opensock(char *host, uint16_t port, char *errbuf, size_t errbuflen)
 {
   int sock_fd = -1;
+  char ipbuf[INET6_ADDRSTRLEN];
+
   struct addrinfo hints;
-  struct addrinfo *rp;
+  struct addrinfo *result, *rp;
 
-  struct sockaddr_in port_info;
-  struct sockaddr_in bind_addr;
-
-  int r, ret, retry = 0, __errno;
+  int r, ret;
   char service[6];
 
-  assert(ip_addr != NULL);
+  assert(host != NULL);
   assert(errbuf != NULL);
   assert(errbuflen > 0);
   assert(port > 0);
@@ -163,88 +199,28 @@ int opensock(char *ip_addr, uint16_t port, char *errbuf, size_t errbuflen)
   hints.ai_socktype = SOCK_STREAM;
   hints.ai_protocol = IPPROTO_TCP;
 
-  if (0 != (r = getaddrinfo(ip_addr, service, &hints, &rp))) {
-    snprintf(errbuf, errbuflen, "getaddrinfo() error \"%s\".", gai_strerror(r));
-    goto COMMON_ERROR;
-  }
+  if (0 != (r = getaddrinfo(host, service, &hints, &result))) {
+    snprintf(errbuf, errbuflen, "getaddrinfo() error \"%s\".", gai_strerror(r));;
+  } else {
+    /*
+     * try to connect to the given address for each returned address
+     */
+    for (rp = result; rp; rp = rp->ai_next) {
 
-  /*
-   * try to connect to the given address 'config.connectretries' times
-   *
-   * the max. timeout is
-   *   config.connecttimeout * config.connectretries
-   */
-  while (config.connectretries > retry) {
+      inet_ntop(rp->ai_family, rp->ai_addr, ipbuf, sizeof(ipbuf));
 
-    if ((sock_fd = socket(rp->ai_family, rp->ai_socktype,rp->ai_protocol)) == -1) {
-      snprintf(errbuf, errbuflen, "socket() error \"%s\".", strerror(errno));
-      log_message(LOG_ERR, "opensock: %s", errbuf);
-      return -1;
-    }
-
-#if 0
-    /* Bind to the specified address */
-    if (config.bind_address) {
-      memset(&bind_addr, 0, sizeof(bind_addr));
-      bind_addr.sin_family = AF_INET;
-      bind_addr.sin_addr.s_addr = inet_addr(config.bind_address);
-
-      ret = bind(sock_fd, (struct sockaddr *) &bind_addr, sizeof(bind_addr));
-      if (ret < 0) {
-	snprintf(errbuf, errbuflen,
-		 "Could not bind local address \"%s\" because of %s",
-		 config.bind_address, strerror(errno));
-	goto COMMON_ERROR;
+      if (-1 == (sock_fd = socket(rp->ai_family, rp->ai_socktype,rp->ai_protocol))) {
+	snprintf(errbuf, errbuflen, "can't create socket: \"%s\".", strerror(errno));
+	log_message(LOG_ERR, "opensock: %s; %s", ipbuf, errbuf);
+      } else if (-1 == do_connect(sock_fd, rp, errbuf, errbuflen)) {
+	log_message(LOG_ERR, "opensock: %s; %s", ipbuf, errbuf);
+	close(sock_fd);
+      } else {
+	log_message(LOG_INFO, "connected to %s", ipbuf);
+	return sock_fd;
       }
     }
-#endif
-
-    socket_nonblocking(sock_fd);
-
-    /* the preferred way out: success! */
-    do {
-      if ((ret = connect(sock_fd, (struct sockaddr *) rp->ai_addr,
-		  rp->ai_addrlen)) == 0)
-      return sock_fd;
-    } while (errno == EINTR);
-
-    if (errno == EINPROGRESS) {
-      struct timeval tv;
-      fd_set fds;
-
-      FD_ZERO(&fds);
-      FD_SET(sock_fd, &fds);
-      tv.tv_sec = config.connecttimeout;
-      tv.tv_usec = 0;
-
-      switch ((ret = select(sock_fd + 1, NULL, &fds, NULL, &tv))) {
-      case -1:
-	snprintf(errbuf, errbuflen, "socket() error \"%s\".", strerror(errno));
-	goto COMMON_ERROR;
-      case 0:
-	snprintf(errbuf, errbuflen, "connect() timeout.");
-	break;
-      default:
-	if (FD_ISSET(sock_fd, &fds)) {
-	  socket_blocking(sock_fd);
-	  return sock_fd;
-	}
-	break;
-      }
-    } else {
-      snprintf(errbuf, errbuflen, "socket() error \"%s\".", strerror(errno));
-    }
-    close(sock_fd);
-    sock_fd = -1;
-    retry++;
   }
-
-COMMON_ERROR:
-
-  errbuf[errbuflen - 1] = '\0';
-  if (sock_fd != -1)
-    close(sock_fd);
-  log_message(LOG_ERR, "opensock: %s", errbuf);
   return -1;
 }
 
