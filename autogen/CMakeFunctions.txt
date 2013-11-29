@@ -6,3 +6,4 @@ strlcpy
 strlcat
 writev
 isascii
+alloca
