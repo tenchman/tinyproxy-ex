@@ -1,0 +1,114 @@
+#ifndef _CONFIG_H
+#define _CONFIG_H 1
+
+#define PACKAGE           "@PACKAGE@"
+#define PACKAGE_NAME      "@PACKAGE@"
+#define PACKAGE_STRING    "@PACKAGE@ @VERSION@"
+#define VERSION           "@VERSION@"
+#define DEFAULT_CONF_FILE "@DEFAULT_CONF_FILE@"
+#define DEFAULT_STATHOST  "@DEFAULT_STATHOST@"
+#define DATAROOTDIR       "@DATAROOTDIR@"
+#define TARGET_SYSTEM     "@CMAKE_SYSTEM@"
+
+#cmakedefine FILTER_SUPPORT	1
+#cmakedefine UPSTREAM_SUPPORT	1
+#cmakedefine FTP_SUPPORT	1
+#cmakedefine PROCTITLE_SUPPORT	1
+
+#define DEFAULT_CONF_FILE "@DEFAULT_CONF_FILE@"
+#define DEFAULT_STATHOST  "@DEFAULT_STATHOST@"
+
+/* sys/ioctl.h */
+#cmakedefine HAVE_SYS_IOCTL_H 1
+/* sys/mman.h */
+#cmakedefine HAVE_SYS_MMAN_H 1
+/* sys/resource.h */
+#cmakedefine HAVE_SYS_RESOURCE_H 1
+/* sys/select.h */
+#cmakedefine HAVE_SYS_SELECT_H 1
+/* sys/socket.h */
+#cmakedefine HAVE_SYS_SOCKET_H 1
+/* sys/time.h */
+#cmakedefine HAVE_SYS_TIME_H 1
+/* sys/uio.h */
+#cmakedefine HAVE_SYS_UIO_H 1
+/* sys/un.h */
+#cmakedefine HAVE_SYS_UN_H 1
+/* sys/wait.h */
+#cmakedefine HAVE_SYS_WAIT_H 1
+/* sys/stat.h */
+#cmakedefine HAVE_SYS_STAT_H 1
+/* arpa/inet.h */
+#cmakedefine HAVE_ARPA_INET_H 1
+/* netinet/in.h */
+#cmakedefine HAVE_NETINET_IN_H 1
+/* alloca.h */
+#cmakedefine HAVE_ALLOCA_H 1
+/* assert.h */
+#cmakedefine HAVE_ASSERT_H 1
+/* ctype.h */
+#cmakedefine HAVE_CTYPE_H 1
+/* errno.h */
+#cmakedefine HAVE_ERRNO_H 1
+/* fcntl.h */
+#cmakedefine HAVE_FCNTL_H 1
+/* grp.h */
+#cmakedefine HAVE_GRP_H 1
+/* io.h */
+#cmakedefine HAVE_IO_H 1
+/* libintl.h */
+#cmakedefine HAVE_LIBINTL_H 1
+/* netdb.h */
+#cmakedefine HAVE_NETDB_H 1
+/* pwd.h */
+#cmakedefine HAVE_PWD_H 1
+/* regex.h */
+#cmakedefine HAVE_REGEX_H 1
+/* unistd.h */
+#cmakedefine HAVE_UNISTD_H 1
+/* signal.h */
+#cmakedefine HAVE_SIGNAL_H 1
+/* stdarg.h */
+#cmakedefine HAVE_STDARG_H 1
+/* stddef.h */
+#cmakedefine HAVE_STDDEF_H 1
+/* stdint.h */
+#cmakedefine HAVE_STDINT_H 1
+/* stdio.h */
+#cmakedefine HAVE_STDIO_H 1
+/* stdlib.h */
+#cmakedefine HAVE_STDLIB_H 1
+/* sysexits.h */
+#cmakedefine HAVE_SYSEXITS_H 1
+/* syslog.h */
+#cmakedefine HAVE_SYSLOG_H 1
+/* time.h */
+#cmakedefine HAVE_TIME_H 1
+/* wchar.h */
+#cmakedefine HAVE_WCHAR_H 1
+/* wctype.h */
+#cmakedefine HAVE_WCTYPE_H 1
+
+/* ========================== */
+/* Function section           */
+/* ========================== */
+
+/* ftruncate() function */
+#cmakedefine HAVE_FTRUNCATE 1
+/* setrlimit() function */
+#cmakedefine HAVE_SETRLIMIT 1
+/* regexec() function */
+#cmakedefine HAVE_REGEXEC 1
+/* mempcpy() function */
+#cmakedefine HAVE_MEMPCPY 1
+/* strlcpy() function */
+#cmakedefine HAVE_STRLCPY 1
+/* strlcat() function */
+#cmakedefine HAVE_STRLCAT 1
+/* writev() function */
+#cmakedefine HAVE_WRITEV 1
+/* isascii() function */
+#cmakedefine HAVE_ISASCII 1
+/* alloca() function */
+#cmakedefine HAVE_ALLOCA 1
+#endif
