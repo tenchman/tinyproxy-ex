@@ -88,7 +88,8 @@
 #cmakedefine HAVE_WCHAR_H 1
 /* wctype.h */
 #cmakedefine HAVE_WCTYPE_H 1
-
+/* time.h + sys/time.h */
+#cmakedefine TIME_WITH_SYS_TIME 1
 /* ========================== */
 /* Function section           */
 /* ========================== */
