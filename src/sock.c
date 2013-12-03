@@ -216,7 +216,7 @@ int opensock(char *host, uint16_t port, char *errbuf, size_t errbuflen)
 	log_message(LOG_ERR, "opensock: %s; %s", ipbuf, errbuf);
 	close(sock_fd);
       } else {
-	log_message(LOG_INFO, "connected to %s", ipbuf);
+	log_message(LOG_INFO, "connected to %s @ %s", host, ipbuf);
 	return sock_fd;
       }
     }
