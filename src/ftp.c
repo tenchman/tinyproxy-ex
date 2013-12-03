@@ -643,7 +643,7 @@ ssize_t add_ftpdir_header(struct conn_s * connptr)
 static int scan_direntry(char *buf, size_t len, struct ftpinfo_s *info)
 {
   char *t = NULL, *name;
-#ifdef HAVE_ALLOCA
+#ifndef HAVE_ALLOCA
   char *copy = safemalloc(len + 1);
 #else
   char *copy = alloca(len + 1);
