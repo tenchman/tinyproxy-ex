@@ -173,7 +173,7 @@ static void set_ftp_greeting(struct conn_s *connptr, char *str)
   if (!str || strncmp(str, "230-", 4))
     return;
 
-  buf = connptr->ftp_greeting = safemalloc(strlen(str));
+  buf = connptr->ftp_greeting = safemalloc(strlen(str) + 1);
 
   if (buf == NULL)
     return;
@@ -188,10 +188,6 @@ static void set_ftp_greeting(struct conn_s *connptr, char *str)
     buf += (tmp - str) + 2;
     str = tmp + 2;
   }
-  /*
-   * the last line is the status line, skip it
-   */
-  strcpy(buf, "\r\n");
 }
 
 #define HTTP_200_OK "HTTP/1.0 200 OK\r\n"
