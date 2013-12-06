@@ -80,51 +80,6 @@ int listeners_total()
   return listeners.total;
 }
 
-/*
- * Take a string host address and return a struct in_addr so we can connect
- * to the remote host.
- *
- * Return a negative if there is a problem.
- */
-static int
-lookup_domain(struct in_addr *addr, const char *domain, char *errbuf,
-	      size_t errbuflen)
-{
-  struct hostent ret, *result = NULL;
-  int h_err;
-  int buflen = 1024, retval = -1;
-  char *buf, *tmp;
-
-  assert(domain != NULL);
-
-  buf = safemalloc(buflen);
-
-  while ((retval = gethostbyname_r(domain, &ret, buf, buflen,
-				   &result, &h_err)) == ERANGE) {
-    buflen *= 2;
-    if ((tmp = saferealloc(buf, buflen)) == NULL) {
-      snprintf(errbuf, errbuflen, "Could not lookup address \"%s\". %s",
-	       domain, strerror(errno));
-      log_message(LOG_CONN, "%s", errbuf);
-      goto COMMON_EXIT;
-    }
-    buf = tmp;
-  }
-
-  if (!retval) {
-    memcpy(addr, result->h_addr_list[0], result->h_length);
-  } else {
-    snprintf(errbuf, errbuflen, "Could not lookup address \"%s\". %s",
-	     domain, hstrerror(h_err));
-    log_message(LOG_CONN, "%s", errbuf);
-  }
-
-COMMON_EXIT:
-
-  safefree(buf);
-  return retval;
-}
-
 static int do_connect(int sock_fd, struct addrinfo *rp, char *errbuf, size_t errbuflen)
 {
   int ret = -1;
