@@ -139,7 +139,7 @@ int opensock(char *host, uint16_t port, char *errbuf, size_t errbuflen)
   struct addrinfo hints;
   struct addrinfo *result, *rp;
 
-  int r, ret;
+  int r;
   char service[6];
 
   assert(host != NULL);
