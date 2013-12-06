@@ -12,7 +12,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
  */
-
+#define _XOPEN_SOURCE		/* strptime */
 #include "tinyproxy-ex.h"
 #ifdef FTP_SUPPORT
 #include <sys/uio.h>		/* writev */
