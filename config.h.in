@@ -90,6 +90,10 @@
 #cmakedefine HAVE_WCTYPE_H 1
 /* time.h + sys/time.h */
 #cmakedefine TIME_WITH_SYS_TIME 1
+/* string.h */
+#cmakedefine HAVE_STRING_H 1
+/* strings.h */
+#cmakedefine HAVE_STRINGS_H 1
 /* ========================== */
 /* Function section           */
 /* ========================== */
