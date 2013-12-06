@@ -767,8 +767,8 @@ static struct request_s *process_request(struct conn_s *connptr,
       return NULL;
     }
   }
-#endif
 ALLOWED:
+#endif
 
 
   /*
