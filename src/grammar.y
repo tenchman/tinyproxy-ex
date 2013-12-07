@@ -137,21 +137,21 @@ statement
 	| KW_STATPAGE string	{ config.statpage = $2; }
 	| KW_OFCD_SOCKET string		
 	  { 
-#ifdef FILTER_ENABLE
+#ifdef FILTER_SUPPORT
 		  config.ofcdsocket = $2; 
 #else
 	          log_message(LOG_WARNING, "Filter support was not compiled in.");	  
 #endif
 	  }
 	| KW_OFCD_CATEGORIES string	{ 
-#ifdef FILTER_ENABLE
+#ifdef FILTER_SUPPORT
 		  config.ofcdcategories = $2; 
 #else
 	          log_message(LOG_WARNING, "Filter support was not compiled in.");	  
 #endif
 	  }
 	| KW_OFCD_BLOCKUNKNOWN yesno    { 
-#ifdef FILTER_ENABLE
+#ifdef FILTER_SUPPORT
 		  config.filter_blockunknown = $2;
 #else
 	          log_message(LOG_WARNING, "Filter support was not compiled in.");	  
@@ -159,7 +159,7 @@ statement
 	  }
 	| KW_ACL string acltype network_addressrange 
 	  { 
-#ifdef FILTER_ENABLE
+#ifdef FILTER_SUPPORT
 		  insert_extacl($2, $3, $4);
 #else
 	          log_message(LOG_WARNING, "Filter support was not compiled in.");
@@ -167,7 +167,7 @@ statement
 	  }
 	| KW_FILTER string string
 	  { 
-#ifdef FILTER_ENABLE
+#ifdef FILTER_SUPPORT
 		  config.filter = 1;
 		  add_new_filter($2, $3);
 #else
@@ -176,7 +176,7 @@ statement
 	  }
         | KW_FILTERURLS yesno
           {
-#ifdef FILTER_ENABLE
+#ifdef FILTER_SUPPORT
 		  config.filter_url = $2;
 #else
 		  log_message(LOG_WARNING, no_filter_support);
@@ -184,7 +184,7 @@ statement
 	  }
         | KW_FILTEREXTENDED yesno
           {
-#ifdef FILTER_ENABLE
+#ifdef FILTER_SUPPORT
 		  config.filter_extended = $2;
 #else
 		  log_message(LOG_WARNING, no_filter_support);
@@ -192,7 +192,7 @@ statement
 	  }
         | KW_FILTER_CASESENSITIVE yesno
           {
-#ifdef FILTER_ENABLE
+#ifdef FILTER_SUPPORT
 		  config.filter_casesensitive = $2;
 #else
 		  log_message(LOG_WARNING, no_filter_support);
@@ -200,7 +200,7 @@ statement
 	  }
         | KW_FILTER_DENY yesno
           {
-#ifdef FILTER_ENABLE
+#ifdef FILTER_SUPPORT
 		  if ($2)
 			  filter_set_default_policy(FILTER_DENY);
 #else
