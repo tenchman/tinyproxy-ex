@@ -281,12 +281,12 @@ static int extract_ssl_url(const char *url, struct request_s *request)
   if (!request->host)
     return -1;
 
-  if (sscanf(url, "%[^:]:%hu", request->host, &request->port) == 2);
-  else if (sscanf(url, "%s", request->host) == 1)
+  if (sscanf(url, "%[^:]:%hu", request->host, &request->port) == 2) {
+    /* host and port found */
+  } else if (sscanf(url, "%s", request->host) == 1) {
     request->port = HTTP_PORT_SSL;
-  else {
+  } else {
     log_message(LOG_ERR, "extract_ssl_url: Can't parse URL.");
-
     safefree(request->host);
     return -1;
   }
