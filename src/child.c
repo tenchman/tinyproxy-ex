@@ -210,8 +210,8 @@ static void child_main(struct child_s *ptr)
 
     handle_connection(connfd);
 
+    ptr->connects++;
     if (child_config.maxrequestsperchild != 0) {
-      ptr->connects++;
 
       DEBUG2("%u connections so far...", ptr->connects);
 
