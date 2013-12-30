@@ -117,6 +117,27 @@ static int do_connect(int sock_fd, struct addrinfo *rp, char *errbuf, size_t err
   return ret;
 }
 
+static const char* addrstr(char *dst, int len, struct addrinfo *rp)
+{
+  union {
+    struct sockaddr_in *in;
+    struct sockaddr_in6 *in6;
+    struct sockaddr *a;
+  } ptr = { .a = rp->ai_addr };
+  const char *ret = NULL;
+
+  memset(dst, 0, len);
+  if (rp->ai_family == AF_INET6) {
+    ret = inet_ntop(rp->ai_family, &ptr.in6->sin6_addr, dst, INET6_ADDRSTRLEN);
+  } else {
+    ret = inet_ntop(rp->ai_family, &ptr.in->sin_addr, dst, INET6_ADDRSTRLEN);
+  }
+  /* Work around a bug in dietlibc on 64bit systems */
+  return ret ? dst : NULL;
+}
+
+
+
 /* This routine is so old I can't even remember writing it.  But I do
  * remember that it was an .h file because I didn't know putting code in a
  * header was bad magic yet.  anyway, this routine opens a connection to a
@@ -162,9 +183,9 @@ int opensock(char *host, uint16_t port, char *errbuf, size_t errbuflen)
      */
     for (rp = result; rp; rp = rp->ai_next) {
 
-      inet_ntop(rp->ai_family, rp->ai_addr, ipbuf, sizeof(ipbuf));
+      addrstr(ipbuf, sizeof(ipbuf), rp);
 
-      if (-1 == (sock_fd = socket(rp->ai_family, rp->ai_socktype,rp->ai_protocol))) {
+      if (-1 == (sock_fd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol))) {
 	snprintf(errbuf, errbuflen, "can't create socket: \"%s\".", strerror(errno));
 	log_message(LOG_ERR, "opensock: %s; %s", ipbuf, errbuf);
       } else if (-1 == do_connect(sock_fd, rp, errbuf, errbuflen)) {
