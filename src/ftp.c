@@ -19,6 +19,7 @@
 #ifdef HAVE_ALLOCA_H
 #include <alloca.h>
 #endif
+#include <inttypes.h>		/* PRIu64 */
 #include <time.h>		/* strptime */
 #include <netinet/tcp.h>	/* TCP_NODELAY */
 #include "reqs.h"
@@ -203,7 +204,7 @@ int send_ftp_response(struct conn_s *connptr)
   iov[n++].iov_len = sizeof(HTTP_200_OK) - 1;
   if (connptr->server.content_length != LENGTH_NONE) {
     iov[n].iov_base = buf;
-    iov[n++].iov_len = snprintf(buf, 256, "Content-Length: %llu\r\n",
+    iov[n++].iov_len = snprintf(buf, 256, "Content-Length: %" PRIu64 "\r\n",
 				connptr->server.content_length);
   }
   iov[n].iov_base = HEAD_CONN_CLOSE;
