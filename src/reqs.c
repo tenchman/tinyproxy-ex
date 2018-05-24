@@ -382,7 +382,7 @@ upstream_add(const char *host, int port, const char *domain,
 
     log_message(LOG_INFO, "Added no-upstream for %s", domain);
   } else {
-    if (!host || host[0] == '\0' || port < 1 || !domain || domain == '\0') {
+    if (!host || host[0] == '\0' || port < 1 || !domain || domain[0] == '\0') {
       log_message(LOG_WARNING, "Nonsense upstream rule: invalid parameters");
       goto upstream_cleanup;
     }
