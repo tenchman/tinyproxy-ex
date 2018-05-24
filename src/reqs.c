@@ -471,8 +471,6 @@ static struct upstream *upstream_get(char *host)
 
   if (up)
     DEBUG2("Found proxy %s:%d for %s", up->host, up->port, host);
-  else
-    DEBUG2("No proxy for %s", host);
 
   return up;
 }
@@ -1088,9 +1086,17 @@ process_client_headers(struct conn_s *connptr, hashmap_t hashofheaders)
    * a stats/local request, or if this was a CONNECT/FTP method (unless
    * upstream proxy is in use.)
    */
-  if (connptr->server_fd == -1 || connptr->show_stats || connptr->local_request
-      || (connptr->method != METH_HTTP && (connptr->upstream_proxy == NULL))) {
-    log_message(LOG_INFO, "Not sending client headers to remote machine");
+  if (connptr->server_fd == -1) {
+    log_message(LOG_INFO, "Not sending client headers to remote machine (server fd == -1)");
+    return 0;
+  } else if (connptr->show_stats) {
+    log_message(LOG_INFO, "Not sending client headers to remote machine (show stats)");
+    return 0;
+  } else if (connptr->local_request) {
+    log_message(LOG_INFO, "Not sending client headers to remote machine (local request)");
+    return 0;
+  } else if (connptr->method != METH_HTTP && (connptr->upstream_proxy == NULL)) {
+    log_message(LOG_INFO, "Not sending client headers to remote machine (CONNECT/FTP w/ upstream)");
     return 0;
   }
 
