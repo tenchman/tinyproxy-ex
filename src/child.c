@@ -107,14 +107,14 @@ static void _child_lock_release(void)
 #define SERVER_INC() do { \
     SERVER_COUNT_LOCK(); \
     ++(*servers_waiting); \
-    DEBUG2("INC: servers_waiting: %d", *servers_waiting); \
+    DEBUG2("INC: servers_waiting: %d", *servers_waiting + 1); \
     SERVER_COUNT_UNLOCK(); \
 } while (0)
 
 #define SERVER_DEC() do { \
     SERVER_COUNT_LOCK(); \
     --(*servers_waiting); \
-    DEBUG2("DEC: servers_waiting: %d", *servers_waiting); \
+    DEBUG2("DEC: servers_waiting: %d", *servers_waiting + 1); \
     SERVER_COUNT_UNLOCK(); \
 } while (0)
 
