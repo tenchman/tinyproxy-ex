@@ -790,7 +790,7 @@ add_to_buffer_formatted(struct buffer_s * buffptr, unsigned char *inbuf,
   static char buf[READ_BUFFER_SIZE * 2] = { 0 };
   char outbuf[READ_BUFFER_SIZE * 4] = { 0 };
   char *this, *next, *outpos, *eob;
-  struct ftpinfo_s info;
+  struct ftpinfo_s info = {};
   size_t len;
 
   if (buflen + connptr->offset >= sizeof(buf)) {
