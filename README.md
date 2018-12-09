@@ -1,16 +1,13 @@
-Tinyproxy:EX
-============
+# Tinyproxy:EX
 
-About
------
+## About
 
 *Tinyproxy:EX* is a fast light-weight HTTP/FTP proxy for POSIX operating
 systems. It is based on the well known tinyproxy-1.6.3 code base.
 *Tinyproxy:EX* adds FTP-Support, basic ACLs to extend tinyproxy's filtering
 capabilities and maybe much more in the future.
 
-:EX what?
----------
+## :EX what?
 
 I've started to develop *Tinyproxy:EX*, because I needed a small
 HTTP/FTP-Proxy for a ressource restricted device. There are billions of
@@ -24,10 +21,9 @@ So, you may choose from one of the following terms:
 * :Ex-orbitant
 * :Ex-aggerated
 * :Ex-pandable
-* <to be filled by your favorite :EX-word>
+* "to be filled by your favorite :EX-word"
 
-Features
---------
+## Features
 
 Apart from functionality inherited from tinyproxy-1.6.3, *Tinyproxy:EX*
 supports the following features:
@@ -51,8 +47,7 @@ supports the following features:
 * Better logging: Access logging with source ip, bytes sent and
   received, time elapsed per connection...
 
-Planned features
-----------------
+## Planned features
 
 * Time based access control
 * Full transparent proxy support: TPROXY
@@ -60,23 +55,19 @@ Planned features
 * IPv6 support
 * Support more broken FTP-Servers: like ftp://ftp.cisco.com
 
-Download
---------
+## Download
 
 Currently there is no stable release available at all. Nevertheless you
 can obtain the sources via GIT.
 
-Build
------
+## Build
 
 In order to build *Tinyproxy:EX* you need http://www.cmake.org/[CMake] which
 is included by default in most modern Linux distributions.
 
-------------------------------------------------------------------------
-git clone https://github.com/tenchman/tinyproxy-ex.git
-mkdir tinyproxy-ex.build
-cd tinyproxy-ex.build
-ccmake ../tinyproxy-ex
-make
-sudo make install
-------------------------------------------------------------------------
+    git clone https://github.com/tenchman/tinyproxy-ex.git
+    mkdir tinyproxy-ex.build
+    cd tinyproxy-ex.build
+    ccmake ../tinyproxy-ex
+    make
+    sudo make install
