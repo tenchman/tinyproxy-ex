@@ -36,8 +36,8 @@ supports the following features:
 * FTP-Support: Tinyproxy:EX supports "FTP over HTTP" like squid (and a
   handfull other proxies).
 * Small footprint: Compiled and linked against a small libc
-  implementation like http://www.fefe.de/dietlibc/[dietlibc] or
-  http://www.uclibc.org/[uClibc], *Tinyproxy:EX* is ideal for use
+  implementation like [dietlibc](http://www.fefe.de/dietlibc/) or
+  [uClibc](http://www.uclibc.org/), *Tinyproxy:EX* is ideal for use
   within embedded environments.
 * Support for Upstream-Proxies: *Tinyproxy:EX* can forward and
   authenticate requests to Upstream-Proxies.
@@ -62,7 +62,7 @@ can obtain the sources via GIT.
 
 ## Build
 
-In order to build *Tinyproxy:EX* you need http://www.cmake.org/[CMake] which
+In order to build *Tinyproxy:EX* you need [CMake](http://www.cmake.org/) which
 is included by default in most modern Linux distributions.
 
     git clone https://github.com/tenchman/tinyproxy-ex.git
