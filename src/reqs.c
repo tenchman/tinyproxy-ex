@@ -173,19 +173,15 @@ retry:
 /*
  * Free all the memory allocated in a request.
  */
-static void free_request_struct(struct request_s *request)
+static void free_request_struct(request_t *request)
 {
   if (!request)
     return;
 
   safefree(request->method);
   safefree(request->protocol);
-
-  if (request->host)
-    safefree(request->host);
-  if (request->path)
-    safefree(request->path);
-
+  safefree(request->host);
+  safefree(request->path);
   safefree(request);
 }
 
@@ -225,7 +221,7 @@ static int extract_accepted_languages(const char *headerline, struct)
  * Pull the information out of the URL line.  This will handle both HTTP
  * and FTP (proxied) URLs.
  */
-static int extract_http_url(const char *__url, struct request_s *request)
+static int extract_http_url(const char *__url, request_t *request)
 {
   int theport = HTTP_PORT;
   char *url;
@@ -276,7 +272,7 @@ ERROR_EXIT:
 /*
  * Extract the URL from a SSL connection.
  */
-static int extract_ssl_url(const char *url, struct request_s *request)
+static int extract_ssl_url(const char *url, request_t *request)
 {
   request->host = safemalloc(strlen(url) + 1);
   if (!request->host)
@@ -481,7 +477,7 @@ static struct upstream *upstream_get(char *host)
  * Create a connection for HTTP connections.
  */
 static int
-establish_http_connection(struct conn_s *connptr, struct request_s *request)
+establish_http_connection(struct conn_s *connptr, request_t *request)
 {
   char portbuff[7];
 
@@ -520,16 +516,16 @@ static inline int send_ssl_response(struct conn_s *connptr)
  * Break the request line apart and figure out where to connect and
  * build a new request line. Finally connect to the remote server.
  */
-static struct request_s *process_request(struct conn_s *connptr,
+static request_t *process_request(struct conn_s *connptr,
 					 hashmap_t hashofheaders)
 {
   char *url;
-  struct request_s *request;
+  request_t *request;
   int ret;
   size_t request_len;
 
   /* NULL out all the fields so frees don't cause segfaults. */
-  request = safecalloc(1, sizeof(struct request_s));
+  request = safecalloc(1, sizeof(request_t));
   if (!request)
     return NULL;
 
@@ -1483,7 +1479,7 @@ static void relay_connection(struct conn_s *connptr)
  * Establish a connection to the upstream proxy server.
  */
 static int
-connect_to_upstream(struct conn_s *connptr, struct request_s *request)
+connect_to_upstream(struct conn_s *connptr, request_t *request)
 {
 #ifndef UPSTREAM_SUPPORT
   /*
@@ -1569,7 +1565,7 @@ void handle_connection(int fd)
 {
   struct timeval tv_s, tv_e;
   struct conn_s *connptr;
-  struct request_s *request = NULL;
+  request_t *request = NULL;
   hashmap_t hashofheaders = NULL;
 
   char peer_ipaddr[PEER_IP_LENGTH];

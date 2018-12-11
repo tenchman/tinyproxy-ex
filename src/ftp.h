@@ -1,7 +1,7 @@
 #ifndef _TINYPROXY_FTP_H_
 #define _TINYPROXY_FTP_H_ 1
 
-extern int connect_ftp(struct conn_s *connptr, struct request_s *request,
+extern int connect_ftp(struct conn_s *connptr, request_t *request,
 		       char *errbuf, size_t errbufsize);
 extern int send_and_receive(int fd, const char *cmd, char *buf, size_t buflen);
 extern ssize_t add_to_buffer_formatted(struct buffer_s *buffptr,

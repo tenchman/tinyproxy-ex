@@ -1,6 +1,6 @@
 /* $Id$
  *
- * Copyright (C) 2008  Gernot Tenchio (gernot@tenchio.de)
+ * Copyright (C) 2008-2018  Gernot Tenchio (git@tenchio.de)
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -334,7 +334,7 @@ FOUND:
  * the data channel
  */
 int
-connect_ftp(struct conn_s *connptr, struct request_s *request, char *errbuf,
+connect_ftp(struct conn_s *connptr, request_t *request, char *errbuf,
 	    size_t errbufsize)
 {
   char *tmp, buf[4096];

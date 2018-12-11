@@ -2,7 +2,7 @@
  *
  * Drop in replacement for writev(2)
  *
- * Copyright (C) 2009 - Gernot Tenchio
+ * Copyright (C) 2009-2018  Gernot Tenchio (git@tenchio.de)
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the

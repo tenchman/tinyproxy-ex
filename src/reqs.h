@@ -4,6 +4,7 @@
  *
  * Copyright (C) 1998  Steven Young
  * Copyright (C) 1999  Robert James Kaes (rjkaes@flarenet.com)
+ * Copyright (C) 2008-2018  Gernot Tenchio (git@tenchio.de)
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -19,18 +20,19 @@
 #ifndef _TINYPROXY_REQS_H_
 #define _TINYPROXY_REQS_H_
 
+#include <stdint.h>
+
 /*
  * This structure holds the information pulled from a URL request.
  */
-struct request_s {
+typedef struct {
   char *method;
   char *protocol;
-
+  char *path;
   char *host;
   uint16_t port;
   uint16_t pad0;
-  char *path;
-};
+} request_t;
 
 extern void handle_connection(int fd);
 extern void add_connect_port_allowed(int port);

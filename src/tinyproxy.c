@@ -9,7 +9,8 @@
  *
  * Copyright (C) 1998       Steven Young
  * Copyright (C) 1998-2002  Robert James Kaes (rjkaes@flarenet.com)
- * Copyright (C) 2000       Chris Lightfoot (chris@ex-parrot.com>
+ * Copyright (C) 2000       Chris Lightfoot (chris@ex-parrot.com)
+ * Copyright (C) 2008-2018  Gernot Tenchio (git@tenchio.de)
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -98,7 +99,7 @@ static void display_license(void)
   Copyright 1998-2002  Robert James Kaes (rjkaes@users.sourceforge.net)\n\
   Copyright 1999       George Talusan (gstalusan@uwaterloo.ca)\n\
   Copyright 2000       Chris Lightfoot (chris@ex-parrot.com)\n\
-  Copyright 2008       Gernot Tenchio (gernot@tenchio.de)\n\
+  Copyright 2008-2018  Gernot Tenchio (git@tenchio.de)\n\
 \n\
   This program is free software; you can redistribute it and/or modify\n\
   it under the terms of the GNU General Public License as published by\n\
