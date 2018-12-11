@@ -715,7 +715,11 @@ static struct request_s *process_request(struct conn_s *connptr,
   /*
    * Filter restricted domains/urls, skip local requests
    */
-  if (config.filter && connptr->local_request == FALSE) {
+  if (0 == config.filter) {
+    /* filtering is off */
+  } else if (TRUE == connptr->local_request) {
+    /* local destination, ignore it */
+  } else {
     char *status = NULL;
     char *aclname = NULL;
 
@@ -736,6 +740,7 @@ static struct request_s *process_request(struct conn_s *connptr,
       else
 	ret = filter_domain(request->host, aclname, &status);
 
+      free(aclname); /* allocated in find_extacl() */
       if (!ret)
 	goto ALLOWED;
 
