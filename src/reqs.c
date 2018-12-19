@@ -563,17 +563,6 @@ static request_t *process_request(struct conn_s *connptr,
    * request.
    */
 
-  if (!url) {
-    log_message(LOG_ERR,
-		"process_request: Null URL on file descriptor %d",
-		connptr->client_fd);
-    indicate_http_error(connptr, 400, "Bad Request",
-			"detail", "Request has an empty URL", NULL);
-
-    free_request_struct(request);
-
-    return NULL;
-  }
 #ifdef FTP_SUPPORT
   if (strncasecmp(url, "http://", 7) == 0 || strncasecmp(url, "ftp://", 6) == 0) {
 #else
