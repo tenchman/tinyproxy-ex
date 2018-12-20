@@ -15,8 +15,8 @@
 #endif
 
 extern char **environ;
-static char **argv0;
-static char *progname;
+static char **argv0 = NULL;
+static char *progname = NULL;
 static size_t prognamelen;
 static size_t available;
 static size_t argv_len;
@@ -36,25 +36,6 @@ void initproctitle(int argc, char **argv)
     prognamelen = strlen(progname);
     available = SPT_BUFSIZE - (prognamelen + 3);
   }
-
-  /* count the environment entries */
-  for (i = 0; envp[i] != NULL; i++);
-
-  /* allocate memory to hold the environment copy */
-  environ = (char **) malloc(sizeof(char *) * (i + 1));
-  if (environ == NULL) {
-    environ = envp;
-    return;
-  }
-
-  /* copy the environment */
-  for (i = 0; envp[i] != NULL; i++) {
-    if ((environ[i] = strdup(envp[i])) == NULL) {
-      environ = envp;
-      return;
-    }
-  }
-  environ[i] = NULL;
 
   /* calculate the maximum argv length */
   argv0 = argv;
@@ -94,6 +75,11 @@ void proctitle(const char *format, ...)
   memcpy(argv0[0], buf, i + 1);
 
   argv0[1] = NULL;
+}
+
+__attribute__((destructor)) void stopproctitle(void)
+{
+  free(progname);
 }
 
 #endif
