@@ -191,13 +191,16 @@ int opensock(char *host, uint16_t port, char *errbuf, size_t errbuflen)
       } else if (-1 == do_connect(sock_fd, rp, errbuf, errbuflen)) {
 	log_message(LOG_ERR, "opensock: %s; %s", ipbuf, errbuf);
 	close(sock_fd);
+	sock_fd = -1;
       } else {
 	log_message(LOG_INFO, "connected to %s @ %s", host, ipbuf);
-	return sock_fd;
+	break;
       }
     }
   }
-  return -1;
+  if (result)
+    freeaddrinfo(result);
+  return sock_fd;
 }
 
 /*
