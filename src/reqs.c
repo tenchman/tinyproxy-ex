@@ -174,6 +174,7 @@ static void free_request_struct(request_t *request)
   safefree(request->protocol);
   safefree(request->host);
   safefree(request->path);
+  safefree(request->url);
   safefree(request);
 }
 
