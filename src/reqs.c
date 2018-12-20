@@ -22,6 +22,8 @@
  * General Public License for more details.
  */
 
+#include <string.h>
+
 #include "tinyproxy-ex.h"
 
 #include "acl.h"
@@ -43,6 +45,7 @@
 #include "vector.h"
 #include "ftp.h"
 #include "proctitle.h"
+#include "parse.h"
 
 /*
  * Maximum length of a HTTP line
@@ -141,7 +144,6 @@ static int read_request_line(struct conn_s *connptr)
 {
   ssize_t len;
 
-retry:
   len = recvline(connptr->client_fd, &connptr->request_line);
   if (len <= 0) {
     log_message(LOG_ERR,
@@ -151,19 +153,9 @@ retry:
     return -1;
   }
 
-  /*
-   * Strip the new line and character return from the string.
-   */
-  if (chomp(connptr->request_line, len) == len) {
-    /*
-     * If the number of characters removed is the same as the
-     * length then it was a blank line. Free the buffer and
-     * try again (since we're looking for a request line.)
-     */
-    safefree(connptr->request_line);
-    goto retry;
-  }
-
+  /* Strip the new line characters */
+  len -= chomp(connptr->request_line, len);
+  connptr->request_len = len;
   log_message(LOG_CONN, "Request (file descriptor %d): %s",
 	      connptr->client_fd, connptr->request_line);
 
@@ -516,53 +508,29 @@ static inline int send_ssl_response(struct conn_s *connptr)
  * Break the request line apart and figure out where to connect and
  * build a new request line. Finally connect to the remote server.
  */
-static request_t *process_request(struct conn_s *connptr,
-					 hashmap_t hashofheaders)
+static request_t *process_request(struct conn_s *connptr, hashmap_t hashofheaders)
 {
   char *url;
   request_t *request;
   int ret;
-  size_t request_len;
 
-  /* NULL out all the fields so frees don't cause segfaults. */
-  request = safecalloc(1, sizeof(request_t));
-  if (!request)
+  /* NULL out all the fields so free's don't cause segfaults. */
+  if (NULL == (request = safecalloc(1, sizeof(request_t))))
     return NULL;
 
-  request_len = strlen(connptr->request_line) + 1;
-
-  request->method = safemalloc(request_len);
-  request->protocol = safemalloc(request_len);
+  /* it is safe to depend on connptr->request_line since it's presence is
+   * ensured by read_request_line()
+  **/
   
-  url = alloca(request_len);
-
-  if (!request->method || !url || !request->protocol) {
+  if (0 != (ret = parse_request_line(request, connptr))) {
+    log_message(LOG_ERR, "process_request: Bad Request on file descriptor %d", connptr->client_fd);
+    indicate_http_error(connptr, 400, "Bad Request", "detail", "Request has an invalid format",
+			"request line", connptr->request_line, NULL);
     free_request_struct(request);
-
     return NULL;
   }
 
-  ret = sscanf(connptr->request_line, "%[^ ] %[^ ] %[^ ]",
-	       request->method, url, request->protocol);
-
-  if (ret < 2) {
-    log_message(LOG_ERR,
-		"process_request: Bad Request on file descriptor %d",
-		connptr->client_fd);
-    indicate_http_error(connptr, 400, "Bad Request",
-			"detail", "Request has an invalid format",
-			"url", url, NULL);
-
-    free_request_struct(request);
-
-    return NULL;
-  }
-
-  /* 
-   * FIXME: We need to add code for the simple HTTP/0.9 style GET
-   * request.
-   */
-
+  url = request->url;
 #ifdef FTP_SUPPORT
   if (strncasecmp(url, "http://", 7) == 0 || strncasecmp(url, "ftp://", 6) == 0) {
 #else

@@ -100,6 +100,7 @@ SET(SOURCES
 	src/tinyproxy.c
 	src/utils.c
 	src/vector.c
+	src/parse.c
 )
 
 ADD_EXECUTABLE(tinyproxy

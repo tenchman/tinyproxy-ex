@@ -30,6 +30,7 @@ typedef struct {
   char *protocol;
   char *path;
   char *host;
+  char *url;
   uint16_t port;
   uint16_t pad0;
 } request_t;

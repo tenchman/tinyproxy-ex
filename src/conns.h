@@ -42,6 +42,7 @@ struct conn_s {
 
   /* The request line (first line) from the client */
   char *request_line;
+  size_t request_len;
 
   /* method and filetype */
   enum { METH_UNKNOWN, METH_HTTP, METH_CONNECT, METH_FTP } method;
