@@ -37,6 +37,9 @@ void initproctitle(int argc, char **argv)
     available = SPT_BUFSIZE - (prognamelen + 3);
   }
 
+  /* count the environment entries */
+  for (i = 0; envp[i] != NULL; i++);
+
   /* calculate the maximum argv length */
   argv0 = argv;
   if (i > 0)
