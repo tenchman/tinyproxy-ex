@@ -34,7 +34,7 @@ struct extacl_s {
   int netmask;
   struct extacl_s *next;
 };
-static struct extacl_s *extaccess_list;
+static struct extacl_s *extaccess_list = NULL;
 
 /*
  * Take a netmask number (between 0 and 32) and returns a network ordered
@@ -47,81 +47,7 @@ static in_addr_t make_netmask(int netmask_num)
   return netmask_num ? htonl(~((1 << (32 - netmask_num)) - 1)) : 0;
 }
 
-/*
- * This function is called whenever a "string" access control is found in
- * the ACL.  From here we do both a text based string comparison, along with
- * a reverse name lookup comparison of the IP addresses.
- *
- * Return: 0 if host is denied
- *         1 if host is allowed
- *        -1 if no tests match, so skip
- */
-#if 0
-static inline int
-acl_string_processing(struct acl_s *aclptr,
-		      const char *ip_address, const char *string_address)
-{
-  int i;
-  struct hostent *result;
-  size_t test_length, match_length;
-
-  /*
-   * If the first character of the ACL string is a period, we need to
-   * do a string based test only; otherwise, we can do a reverse
-   * lookup test as well.
-   */
-  if (aclptr->location[0] != '.') {
-    /* It is not a partial domain, so do a reverse lookup. */
-    result = gethostbyname(aclptr->location);
-    if (!result)
-      goto STRING_TEST;
-
-    for (i = 0; result->h_addr_list[i]; ++i) {
-      if (strcmp(ip_address,
-		 inet_ntoa(*((struct in_addr *) result->h_addr_list[i]))) ==
-	  0) {
-	/* We have a match */
-	if (aclptr->acl_access == ACL_DENY) {
-	  return 0;
-	} else {
-	  DEBUG2("Matched using reverse domain lookup: %s", ip_address);
-	  return 1;
-	}
-      }
-    }
-
-    /*
-     * If we got this far, the reverse didn't match, so drop down
-     * to a standard string test.
-     */
-  }
-
-STRING_TEST:
-  test_length = strlen(string_address);
-  match_length = strlen(aclptr->location);
-
-  /*
-   * If the string length is shorter than AC string, return a -1 so
-   * that the "driver" will skip onto the next control in the list.
-   */
-  if (test_length < match_length)
-    return -1;
-
-  if (strcasecmp
-      (string_address + (test_length - match_length), aclptr->location) == 0) {
-    if (aclptr->acl_access == ACL_DENY)
-      return 0;
-    else
-      return 1;
-  }
-
-  /* Indicate that no tests succeeded, so skip to next control. */
-  return -1;
-}
-#endif
-
 /* Extended acl processing */
-
 int insert_extacl(char *aclname, acl_type_t acltype, char *location)
 {
   size_t i;
@@ -177,8 +103,7 @@ int insert_extacl(char *aclname, acl_type_t acltype, char *location)
        * Check for a ipaddress range */
     } else if ((nptr = strchr(location, '-'))) {
       *nptr++ = '\0';
-      if (!(new_acl_ptr->rangeend = strdup(nptr)))
-	goto ERROROUT;
+      new_acl_ptr->rangeend = nptr;
     } else {
       new_acl_ptr->netmask = 32;
     }
@@ -189,11 +114,8 @@ int insert_extacl(char *aclname, acl_type_t acltype, char *location)
     new_acl_ptr->netmask = 32;
   }
 
-  if (!(new_acl_ptr->aclname = strdup(aclname)))
-    goto ERROROUT;
-
-  if (!(new_acl_ptr->location = strdup(location)))
-    goto ERROROUT;
+  new_acl_ptr->aclname = aclname;
+  new_acl_ptr->location = location;
 
   *rev_acl_ptr = new_acl_ptr;
   new_acl_ptr->next = acl_ptr;
@@ -201,11 +123,6 @@ int insert_extacl(char *aclname, acl_type_t acltype, char *location)
   return 0;
 
 ERROROUT:
-  if (new_acl_ptr->aclname)
-    free(new_acl_ptr->aclname);
-  if (new_acl_ptr->rangeend)
-    free(new_acl_ptr->rangeend);
-  free(new_acl_ptr);
   return -1;
 }
 
