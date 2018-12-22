@@ -914,7 +914,7 @@ static int remove_connection_headers(hashmap_t hashofheaders)
   };
 
   void *data;
-  char *ptr;
+  char *ptr, *end;
   ssize_t len;
   int i;
 
@@ -937,12 +937,13 @@ static int remove_connection_headers(hashmap_t hashofheaders)
      * token and remove them from the hashofheaders.
      */
     ptr = (char *) data;
-    while (ptr < (char *) data + len) {
+    end = ptr + len;
+    while (ptr < end) {
       hashmap_remove(hashofheaders, ptr);
 
       /* Advance ptr to the next token */
       ptr += strlen(ptr) + 1;
-      while (*ptr == '\0')
+      while (ptr < end && *ptr == '\0')
 	ptr++;
     }
 
