@@ -47,7 +47,7 @@ int add_new_errorpage(char *filepath, unsigned int errornum)
     return (-1);
 
   /* Set values for errorpage structure. */
-  config.errorpages[errorpage_count - 1]->errorpage_path = strdup(filepath);
+  config.errorpages[errorpage_count - 1]->errorpage_path = filepath;
   if (!config.errorpages[errorpage_count - 1]->errorpage_path)
     return (-1);
 
