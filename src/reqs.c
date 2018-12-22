@@ -32,7 +32,7 @@
 #include "conns.h"
 #include "filter.h"
 #include "hashmap.h"
-#include "heap.h"
+
 #include "htmlerror.h"
 #include "log.h"
 #include "network.h"
@@ -170,12 +170,12 @@ static void free_request_struct(request_t *request)
   if (!request)
     return;
 
-  safefree(request->method);
-  safefree(request->protocol);
-  safefree(request->host);
-  safefree(request->path);
-  safefree(request->url);
-  safefree(request);
+  free(request->method);
+  free(request->protocol);
+  free(request->host);
+  free(request->path);
+  free(request->url);
+  free(request);
 }
 
 /*
@@ -224,8 +224,8 @@ static int extract_http_url(const char *__url, request_t *request)
 
   url += 2;
 
-  request->host = safemalloc(strlen(url) + 1);
-  request->path = safemalloc(strlen(url) + 1);
+  request->host = malloc(strlen(url) + 1);
+  request->path = malloc(strlen(url) + 1);
 
   if (!request->host || !request->path)
     goto ERROR_EXIT;
@@ -255,9 +255,9 @@ static int extract_http_url(const char *__url, request_t *request)
 
 ERROR_EXIT:
   if (request->host)
-    safefree(request->host);
+    free(request->host);
   if (request->path)
-    safefree(request->path);
+    free(request->path);
 
   return -1;
 }
@@ -267,7 +267,7 @@ ERROR_EXIT:
  */
 static int extract_ssl_url(const char *url, request_t *request)
 {
-  request->host = safemalloc(strlen(url) + 1);
+  request->host = malloc(strlen(url) + 1);
   if (!request->host)
     return -1;
 
@@ -277,7 +277,7 @@ static int extract_ssl_url(const char *url, request_t *request)
     request->port = HTTP_PORT_SSL;
   } else {
     log_message(LOG_ERR, "extract_ssl_url: Can't parse URL.");
-    safefree(request->host);
+    free(request->host);
     return -1;
   }
 
@@ -301,7 +301,7 @@ static int build_url(char **url, const char *host, int port, const char *path)
   assert(path != NULL);
 
   len = strlen(host) + strlen(path) + 14;
-  *url = safemalloc(len);
+  *url = malloc(len);
   if (*url == NULL)
     return -1;
 
@@ -318,7 +318,7 @@ upstream_add(const char *host, int port, const char *domain,
 	     const char *authentication)
 {
   char *ptr;
-  struct upstream *up = safemalloc(sizeof(struct upstream));
+  struct upstream *up = malloc(sizeof(struct upstream));
 
   if (!up) {
     log_message(LOG_ERR, "Unable to allocate memory in upstream_add()");
@@ -332,7 +332,7 @@ upstream_add(const char *host, int port, const char *domain,
   up->ip = up->mask = 0;
 
   if (authentication && authentication[0] != '\0')
-    up->authentication = safestrdup(authentication);
+    up->authentication = strdup(authentication);
 
   if (domain == NULL) {
     if (!host || host[0] == '\0' || port < 1) {
@@ -340,7 +340,7 @@ upstream_add(const char *host, int port, const char *domain,
       goto upstream_cleanup;
     }
 
-    up->host = safestrdup(host);
+    up->host = strdup(host);
     up->port = port;
 
     log_message(LOG_INFO, "Added upstream %s:%d for [default]", host, port);
@@ -367,7 +367,7 @@ upstream_add(const char *host, int port, const char *domain,
 	}
       }
     } else {
-      up->domain = safestrdup(domain);
+      up->domain = strdup(domain);
     }
 
     log_message(LOG_INFO, "Added no-upstream for %s", domain);
@@ -377,9 +377,9 @@ upstream_add(const char *host, int port, const char *domain,
       goto upstream_cleanup;
     }
 
-    up->host = safestrdup(host);
+    up->host = strdup(host);
     up->port = port;
-    up->domain = safestrdup(domain);
+    up->domain = strdup(domain);
 
     log_message(LOG_INFO, "Added upstream %s:%d for %s", host, port, domain);
   }
@@ -409,10 +409,10 @@ upstream_add(const char *host, int port, const char *domain,
   return;
 
 upstream_cleanup:
-  safefree(up->host);
-  safefree(up->domain);
-  safefree(up->authentication);
-  safefree(up);
+  free(up->host);
+  free(up->domain);
+  free(up->authentication);
+  free(up);
 
   return;
 }
@@ -516,7 +516,7 @@ static request_t *process_request(struct conn_s *connptr, hashmap_t hashofheader
   int ret;
 
   /* NULL out all the fields so free's don't cause segfaults. */
-  if (NULL == (request = safecalloc(1, sizeof(request_t))))
+  if (NULL == (request = calloc(1, sizeof(request_t))))
     return NULL;
 
   /* it is safe to depend on connptr->request_line since it's presence is
@@ -604,23 +604,23 @@ static request_t *process_request(struct conn_s *connptr, hashmap_t hashofheader
 	free_request_struct(request);
 	return NULL;
       }
-      request->host = safemalloc(17);
+      request->host = malloc(17);
       strcpy(request->host, inet_ntoa(dest_addr.sin_addr));
       request->port = ntohs(dest_addr.sin_port);
-      request->path = safemalloc(strlen(url) + 1);
+      request->path = malloc(strlen(url) + 1);
       strcpy(request->path, url);
       build_url(&url, request->host, request->port, request->path);
       log_message(LOG_INFO,
 		  "process_request: trans IP %s %s for %d",
 		  request->method, url, connptr->client_fd);
     } else {
-      request->host = safemalloc(length + 1);
+      request->host = malloc(length + 1);
       if (sscanf((char *) data, "%[^:]:%hu", request->host, &request->port) !=
 	  2) {
 	strcpy(request->host, (char *) data);
 	request->port = HTTP_PORT;
       }
-      request->path = safemalloc(strlen(url) + 1);
+      request->path = malloc(strlen(url) + 1);
       strcpy(request->path, url);
       build_url(&url, request->host, request->port, request->path);
       log_message(LOG_INFO,
@@ -719,7 +719,7 @@ static request_t *process_request(struct conn_s *connptr, hashmap_t hashofheader
 			    "detail", "The request you made has been filtered.",
 			    "url", url, NULL);
       }
-      safefree(status);
+      free(status);
       free_request_struct(request);
 
       return NULL;
@@ -752,7 +752,7 @@ static int pull_client_data(struct conn_s *connptr, uint64_t length)
   char *buffer;
   ssize_t len;
 
-  buffer = safemalloc(min(MAXBUFFSIZE, length));
+  buffer = malloc(min(MAXBUFFSIZE, length));
   if (!buffer)
     return -1;
 
@@ -784,11 +784,11 @@ static int pull_client_data(struct conn_s *connptr, uint64_t length)
   if (len == 2 && CHECK_CRLF(buffer, len))
     recv(connptr->client_fd, buffer, 2, 0);
 
-  safefree(buffer);
+  free(buffer);
   return 0;
 
 ERROR_EXIT:
-  safefree(buffer);
+  free(buffer);
   return -1;
 }
 
@@ -862,7 +862,7 @@ static int get_all_headers(int fd, hashmap_t hashofheaders)
 
   for (;;) {
     if ((len = recvline(fd, &header)) <= 0) {
-      safefree(header);
+      free(header);
       return -1;
     }
 
@@ -871,7 +871,7 @@ static int get_all_headers(int fd, hashmap_t hashofheaders)
      * finished.
      */
     if (CHECK_CRLF(header, len)) {
-      safefree(header);
+      free(header);
       return 0;
     }
 
@@ -889,16 +889,16 @@ static int get_all_headers(int fd, hashmap_t hashofheaders)
     if (strncasecmp(header, "HTTP/", 5) == 0) {
       double_cgi = TRUE;
 
-      safefree(header);
+      free(header);
       continue;
     }
 
     if (!double_cgi && add_header_to_connection(hashofheaders, header, len) < 0) {
-      safefree(header);
+      free(header);
       return -1;
     }
 
-    safefree(header);
+    free(header);
   }
 }
 
@@ -1178,7 +1178,7 @@ static int process_server_headers(struct conn_s *connptr)
    **/
   if (!(data = strchr(response_line, ' '))
       || !(connptr->statuscode = atoi(data))) {
-    safefree(response_line);
+    free(response_line);
     return -1;
   }
 
@@ -1187,7 +1187,7 @@ static int process_server_headers(struct conn_s *connptr)
    * '\r' or '\n'. Bail out if not.
    **/
   if ((num = strcspn(response_line, "\r\n")) == 0) {
-    safefree(response_line);
+    free(response_line);
     return -1;
   }
 
@@ -1195,7 +1195,7 @@ static int process_server_headers(struct conn_s *connptr)
 
   hashofheaders = hashmap_create(HEADER_BUCKETS);
   if (!hashofheaders) {
-    safefree(response_line);
+    free(response_line);
     return -1;
   }
 
@@ -1206,7 +1206,7 @@ static int process_server_headers(struct conn_s *connptr)
     log_message(LOG_WARNING,
 		"Could not retrieve all the headers from the remote server.");
     hashmap_delete(hashofheaders);
-    safefree(response_line);
+    free(response_line);
 
     indicate_http_error(connptr, 503, "Could not retrieve all the headers",
 			"detail",
@@ -1221,7 +1221,7 @@ static int process_server_headers(struct conn_s *connptr)
 
   /* Send the saved response line first */
   ret = send_message(connptr->client_fd, "%s\r\n", response_line);
-  safefree(response_line);
+  free(response_line);
   if (ret < 0)
     goto ERROR_EXIT;
 
@@ -1482,7 +1482,7 @@ connect_to_upstream(struct conn_s *connptr, request_t *request)
   if (connptr->method == METH_CONNECT) {
     len = strlen(request->host) + 7;
 
-    combined_string = safemalloc(len);
+    combined_string = malloc(len);
     if (!combined_string) {
       return -1;
     }
@@ -1490,7 +1490,7 @@ connect_to_upstream(struct conn_s *connptr, request_t *request)
     snprintf(combined_string, len, "%s:%d", request->host, request->port);
   } else {
     len = strlen(request->host) + strlen(request->path) + 14;
-    combined_string = safemalloc(len);
+    combined_string = malloc(len);
     if (!combined_string) {
       return -1;
     }
@@ -1503,7 +1503,7 @@ connect_to_upstream(struct conn_s *connptr, request_t *request)
   log_message(LOG_CONN, "request_path: %s %s", request->path, combined_string);
 
   if (request->path)
-    safefree(request->path);
+    free(request->path);
   request->path = combined_string;
 
   return establish_http_connection(connptr, request);

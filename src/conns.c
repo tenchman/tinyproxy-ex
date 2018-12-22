@@ -22,7 +22,6 @@
 
 #include "buffer.h"
 #include "conns.h"
-#include "heap.h"
 #include "log.h"
 #include "stats.h"
 #include "network.h"
@@ -47,7 +46,7 @@ struct conn_s *initialize_conn(int client_fd, const char *ipaddr,
   /*
    * Allocate the space for the conn_s structure itself.
    */
-  connptr = safecalloc(1, sizeof(struct conn_s));
+  connptr = calloc(1, sizeof(struct conn_s));
   if (!connptr)
     goto error_exit;
 
@@ -69,8 +68,8 @@ struct conn_s *initialize_conn(int client_fd, const char *ipaddr,
   /* There is _no_ content length initially */
   connptr->server.content_length = connptr->client.content_length = -1;
 
-  connptr->client_ip_addr = safestrdup(ipaddr);
-  connptr->client_string_addr = safestrdup(string_addr);
+  connptr->client_ip_addr = strdup(ipaddr);
+  connptr->client_string_addr = strdup(string_addr);
 
   update_stats(STAT_OPEN);
 
@@ -113,11 +112,11 @@ void destroy_conn(struct conn_s *connptr)
       log_message(LOG_INFO, "Server cmd (%d) close message: %s",
 		  connptr->server_cfd, strerror(errno));
   if (connptr->ftp_basedir)
-    safefree(connptr->ftp_basedir);
+    free(connptr->ftp_basedir);
   if (connptr->ftp_path)
-    safefree(connptr->ftp_path);
+    free(connptr->ftp_path);
   if (connptr->ftp_greeting)
-    safefree(connptr->ftp_greeting);
+    free(connptr->ftp_greeting);
 #endif
   if (connptr->cbuffer)
     delete_buffer(connptr->cbuffer);
@@ -125,29 +124,29 @@ void destroy_conn(struct conn_s *connptr)
     delete_buffer(connptr->sbuffer);
 
   if (connptr->request_line)
-    safefree(connptr->request_line);
+    free(connptr->request_line);
 
   if (connptr->error_variables) {
     int i;
 
     for (i = 0; i != connptr->error_variable_count; ++i) {
-      safefree(connptr->error_variables[i]->error_key);
-      safefree(connptr->error_variables[i]->error_val);
-      safefree(connptr->error_variables[i]);
+      free(connptr->error_variables[i]->error_key);
+      free(connptr->error_variables[i]->error_val);
+      free(connptr->error_variables[i]);
     }
 
-    safefree(connptr->error_variables);
+    free(connptr->error_variables);
   }
 
   if (connptr->error_string)
-    safefree(connptr->error_string);
+    free(connptr->error_string);
 
   if (connptr->client_ip_addr)
-    safefree(connptr->client_ip_addr);
+    free(connptr->client_ip_addr);
   if (connptr->client_string_addr)
-    safefree(connptr->client_string_addr);
+    free(connptr->client_string_addr);
 
-  safefree(connptr);
+  free(connptr);
 
   update_stats(STAT_CLOSE);
 }

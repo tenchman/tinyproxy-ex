@@ -16,7 +16,7 @@
  */
 
 #include "common.h"
-#include "heap.h"
+
 #include "http_message.h"
 #include "network.h"
 
@@ -84,13 +84,13 @@ http_message_create(int response_code, const char *response_string)
   http_message_t msg;
   int ret;
 
-  msg = safecalloc(1, sizeof(struct http_message_s));
+  msg = calloc(1, sizeof(struct http_message_s));
   if (msg == NULL)
     return NULL;
 
-  msg->headers.strings = safecalloc(NUMBER_OF_HEADERS, sizeof(char *));
+  msg->headers.strings = calloc(NUMBER_OF_HEADERS, sizeof(char *));
   if (msg->headers.strings == NULL) {
-    safefree(msg);
+    free(msg);
     return NULL;
   }
 
@@ -99,8 +99,8 @@ http_message_create(int response_code, const char *response_string)
   /* Store the HTTP response information in the structure */
   ret = http_message_set_response(msg, response_code, response_string);
   if (IS_HTTP_MSG_ERROR(ret)) {
-    safefree(msg->headers.strings);
-    safefree(msg);
+    free(msg->headers.strings);
+    free(msg);
     return NULL;
   }
 
@@ -122,8 +122,8 @@ int http_message_destroy(http_message_t msg)
     return -EFAULT;
 
   if (msg->headers.strings != NULL)
-    safefree(msg->headers.strings);
-  safefree(msg);
+    free(msg->headers.strings);
+  free(msg);
   return 0;
 }
 
@@ -192,7 +192,7 @@ http_message_add_headers(http_message_t msg, char **headers, int num_headers)
    * available, reallocate the memory.
    */
   if (msg->headers.used + num_headers > msg->headers.total) {
-    new_headers = safecalloc(msg->headers.total * 2, sizeof(char *));
+    new_headers = calloc(msg->headers.total * 2, sizeof(char *));
     if (new_headers == NULL)
       return -ENOMEM;
 
@@ -201,7 +201,7 @@ http_message_add_headers(http_message_t msg, char **headers, int num_headers)
       new_headers[i] = msg->headers.strings[i];
 
     /* Remove the old array and replace it with the new array */
-    safefree(msg->headers.strings);
+    free(msg->headers.strings);
     msg->headers.strings = new_headers;
     msg->headers.total *= 2;
   }

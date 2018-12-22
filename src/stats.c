@@ -86,7 +86,7 @@ int showstats(struct conn_s *connptr)
   FILE *statfile;
 
   if (!config.statpage || (!(statfile = fopen(config.statpage, "r")))) {
-    message_buffer = safemalloc(MAXBUFFSIZE);
+    message_buffer = malloc(MAXBUFFSIZE);
     if (!message_buffer)
       return -1;
 
@@ -98,11 +98,11 @@ int showstats(struct conn_s *connptr)
 	     stats->num_refused);
 
     if (send_http_message(connptr, 200, "OK", message_buffer) < 0) {
-      safefree(message_buffer);
+      free(message_buffer);
       return -1;
     }
 
-    safefree(message_buffer);
+    free(message_buffer);
     return 0;
   }
 

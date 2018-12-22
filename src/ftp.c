@@ -12,7 +12,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
  */
-#define _XOPEN_SOURCE		/* strptime */
+#define _XOPEN_SOURCE	500	/* strptime */
+#include <time.h>		/* strptime */
 #include "tinyproxy-ex.h"
 #ifdef FTP_SUPPORT
 #include <sys/uio.h>		/* writev */
@@ -20,13 +21,12 @@
 #include <alloca.h>
 #endif
 #include <inttypes.h>		/* PRIu64 */
-#include <time.h>		/* strptime */
 #include <netinet/tcp.h>	/* TCP_NODELAY */
+#include <string.h>
 #include "reqs.h"
 #include "network.h"
 #include "conns.h"
 #include "utils.h"
-#include "heap.h"
 #include "buffer.h"
 #include "log.h"
 #include "sock.h"
@@ -174,7 +174,7 @@ static void set_ftp_greeting(struct conn_s *connptr, char *str)
   if (!str || strncmp(str, "230-", 4))
     return;
 
-  buf = connptr->ftp_greeting = safemalloc(strlen(str) + 1);
+  buf = connptr->ftp_greeting = malloc(strlen(str) + 1);
 
   if (buf == NULL)
     return;
@@ -398,7 +398,7 @@ connect_ftp(struct conn_s *connptr, request_t *request, char *errbuf,
   /* decode url encoded paths */
   urldecode(request->path);
 
-  path = pathcopy = safestrdup(request->path);
+  path = pathcopy = strdup(request->path);
 
   /* 
    * extract the type from "lftp" style urls, i.e.
@@ -437,13 +437,13 @@ connect_ftp(struct conn_s *connptr, request_t *request, char *errbuf,
   if (code == 250 || code == 230) {
     if (file && *file) {
       ssize_t flen = strlen(file);
-      connptr->ftp_basedir = safemalloc(flen + 2);
+      connptr->ftp_basedir = malloc(flen + 2);
       memcpy(connptr->ftp_basedir, file, flen);
       connptr->ftp_basedir[flen] = '/';
       connptr->ftp_basedir[flen + 1] = '\0';
     }
     file = NULL;
-    connptr->ftp_path = safestrdup(request->path);
+    connptr->ftp_path = strdup(request->path);
   } else if (path) {
     snprintf(buf, sizeof(buf), "CWD %s\r\n", path);
     if ((code = send_and_receive(fd, buf, buf, sizeof(buf))) == -1)
@@ -453,7 +453,7 @@ connect_ftp(struct conn_s *connptr, request_t *request, char *errbuf,
       log_message(LOG_WARNING, "CWD: Unexpected answer: (%d), %s", code, buf);
       goto COMMON_ERROR_QUIT;
     }
-    connptr->ftp_path = safestrdup(path);
+    connptr->ftp_path = strdup(path);
   }
 
   /* 
@@ -462,7 +462,7 @@ connect_ftp(struct conn_s *connptr, request_t *request, char *errbuf,
    */
   if (strcmp(request->method, "HEAD") == 0) {
     send_and_receive(fd, "QUIT\r\n", buf, sizeof(buf));
-    safefree(pathcopy);
+    free(pathcopy);
     return 0;
   }
 
@@ -547,7 +547,7 @@ connect_ftp(struct conn_s *connptr, request_t *request, char *errbuf,
     connptr->ftp_isdir = TRUE;
   }
 
-  safefree(pathcopy);
+  free(pathcopy);
   connptr->server_cfd = fd;
   return connptr->server_fd;
 
@@ -556,7 +556,7 @@ COMMON_ERROR_QUIT:
     strncpy(errbuf, buf, errbufsize - 1);
   if (connected)
     send_and_receive(fd, "QUIT\r\n", buf, sizeof(buf));
-  safefree(pathcopy);
+  free(pathcopy);
   if (connptr->server_fd != -1)
     close(connptr->server_fd);
   connptr->statuscode = code;
@@ -602,7 +602,7 @@ static ssize_t fmt_direntry(char *buf, size_t buflen, struct ftpinfo_s *info)
 		  info->date, info->size, info->link ? info->link : "");
 
 #ifndef HAVE_ALLOCA
-  safefree(safename);
+  free(safename);
 #endif
   return nlen;
 }
@@ -641,7 +641,7 @@ static int scan_direntry(char *buf, size_t len, struct ftpinfo_s *info)
 {
   char *t = NULL, *name;
 #ifndef HAVE_ALLOCA
-  char *copy = safemalloc(len + 1);
+  char *copy = malloc(len + 1);
 #else
   char *copy = alloca(len + 1);
 #endif
@@ -663,7 +663,7 @@ static int scan_direntry(char *buf, size_t len, struct ftpinfo_s *info)
     n_tokens++;
   }
 #else
-    tokens[n_tokens++] = safestrdup(t);
+    tokens[n_tokens++] = strdup(t);
 #endif
 
   if (n_tokens < 4 && tokens[0][0] != '+') {
@@ -720,20 +720,20 @@ static int scan_direntry(char *buf, size_t len, struct ftpinfo_s *info)
 	       tokens[i], tokens[i + 1], tokens[i + 2]);
 
     info->type = *tokens[0];
-    info->date = safestrdup(tmp);
+    info->date = strdup(tmp);
     info->link = NULL;
 
     if ((name = strstr(copy, tmp))) {
       name += strlen(tmp);
       while (strchr(" \t\n\r", *name))
 	name++;
-      info->name = safestrdup(name);
+      info->name = strdup(name);
       if (info->type == 'l' && (t = strstr(info->name, " -> "))) {
 	*t = '\0';
 	info->link = t + 1;
       }
     } else {
-      info->name = safestrdup(tokens[i + 3]);
+      info->name = strdup(tokens[i + 3]);
     }
 
     retval = 0;
@@ -747,7 +747,7 @@ static int scan_direntry(char *buf, size_t len, struct ftpinfo_s *info)
   if (strptime(tokens[0], "%m-%d-%y", &tm)
       && strptime(tokens[1], "%H:%M%p", &tm)) {
     snprintf(tmp, sizeof(tmp), "%s %s", tokens[0], tokens[1]);
-    info->date = safestrdup(tmp);
+    info->date = strdup(tmp);
     info->link = NULL;
 
     if (strcasecmp(tokens[2], "<dir>") == 0) {
@@ -766,9 +766,9 @@ static int scan_direntry(char *buf, size_t len, struct ftpinfo_s *info)
     if (name) {
       while (isspace(*name))
 	name++;
-      info->name = safestrdup(name);
+      info->name = strdup(name);
     } else {
-      info->name = safestrdup(tokens[3]);
+      info->name = strdup(tokens[3]);
     }
     retval = 0;
   }
@@ -776,8 +776,8 @@ static int scan_direntry(char *buf, size_t len, struct ftpinfo_s *info)
 COMMON_EXIT:
 #ifndef HAVE_ALLOCA
   for (i = 0; i < n_tokens; i++)
-    safefree(tokens[i]);
-  safefree(copy);
+    free(tokens[i]);
+  free(copy);
 #endif
   return retval;
 }
@@ -840,8 +840,8 @@ add_to_buffer_formatted(struct buffer_s * buffptr, unsigned char *inbuf,
       if (info.name[0] != '.' && (info.name[1] != '.' || info.name[1] != '\0'))
 	len = fmt_direntry(outpos, sizeof(outbuf) - (outpos - outbuf), &info);
 
-      safefree(info.date);
-      safefree(info.name);
+      free(info.date);
+      free(info.name);
 
       /*
        * this should really handled nicer. Kill me if you

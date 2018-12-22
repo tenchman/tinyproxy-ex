@@ -24,7 +24,7 @@
 #include "tinyproxy-ex.h"
 
 #include "conns.h"
-#include "heap.h"
+
 #include "http_message.h"
 #include "utils.h"
 

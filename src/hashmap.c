@@ -28,7 +28,7 @@
 #include "tinyproxy-ex.h"
 
 #include "hashmap.h"
-#include "heap.h"
+
 
 /*
  * These structures are the storage for the hashmap.  Entries are stored in
@@ -100,16 +100,16 @@ hashmap_t hashmap_create(unsigned int nbuckets)
   if (nbuckets == 0)
     return NULL;
 
-  ptr = (struct hashmap_s *) safecalloc(1, sizeof(struct hashmap_s));
+  ptr = (struct hashmap_s *) calloc(1, sizeof(struct hashmap_s));
   if (!ptr)
     return NULL;
 
   ptr->size = nbuckets;
-  ptr->buckets = (struct hashbucket_s *) safecalloc(nbuckets,
+  ptr->buckets = (struct hashbucket_s *) calloc(nbuckets,
 						    sizeof(struct
 							   hashbucket_s));
   if (!ptr->buckets) {
-    safefree(ptr);
+    free(ptr);
     return NULL;
   }
 
@@ -138,9 +138,9 @@ static inline int delete_hashbucket(struct hashbucket_s *bucket)
   while (ptr) {
     nextptr = ptr->next;
 
-    safefree(ptr->key);
-    safefree(ptr->data);
-    safefree(ptr);
+    free(ptr->key);
+    free(ptr->data);
+    free(ptr);
 
     ptr = nextptr;
   }
@@ -167,8 +167,8 @@ int hashmap_delete(hashmap_t map)
     }
   }
 
-  safefree(map->buckets);
-  safefree(map);
+  free(map->buckets);
+  free(map);
 
   return 0;
 }
@@ -208,21 +208,21 @@ int hashmap_insert(hashmap_t map, const char *key, const void *data, size_t len)
    * First make copies of the key and data in case there is a memory
    * problem later.
    */
-  key_copy = safestrdup(key);
+  key_copy = strdup(key);
   if (!key_copy)
     return -ENOMEM;
 
-  data_copy = safemalloc(len);
+  data_copy = malloc(len);
   if (!data_copy) {
-    safefree(key_copy);
+    free(key_copy);
     return -ENOMEM;
   }
   memcpy(data_copy, data, len);
 
-  ptr = (struct hashentry_s *) safemalloc(sizeof(struct hashentry_s));
+  ptr = (struct hashentry_s *) malloc(sizeof(struct hashentry_s));
   if (!ptr) {
-    safefree(key_copy);
-    safefree(data_copy);
+    free(key_copy);
+    free(data_copy);
     return -ENOMEM;
   }
 
@@ -473,9 +473,9 @@ ssize_t hashmap_remove(hashmap_t map, const char *key)
       if (map->buckets[hash].tail == ptr)
 	map->buckets[hash].tail = ptr->prev;
 
-      safefree(ptr->key);
-      safefree(ptr->data);
-      safefree(ptr);
+      free(ptr->key);
+      free(ptr->data);
+      free(ptr);
 
       ++deleted;
       --map->end_iterator;

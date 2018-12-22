@@ -17,7 +17,7 @@
 
 #include "tinyproxy-ex.h"
 
-#include "heap.h"
+
 #include "vector.h"
 
 /*
@@ -51,7 +51,7 @@ vector_t vector_create(void)
 {
   vector_t vector;
 
-  vector = safemalloc(sizeof(struct vector_s));
+  vector = malloc(sizeof(struct vector_s));
   if (!vector)
     return NULL;
 
@@ -77,13 +77,13 @@ int vector_delete(vector_t vector)
   ptr = vector->head;
   while (ptr) {
     next = ptr->next;
-    safefree(ptr->data);
-    safefree(ptr);
+    free(ptr->data);
+    free(ptr);
 
     ptr = next;
   }
 
-  safefree(vector);
+  free(vector);
 
   return 0;
 }
@@ -109,13 +109,13 @@ static int vector_insert(vector_t vector, void *data, ssize_t len, int pos)
       (pos != INSERT_PREPEND && pos != INSERT_APPEND))
     return -EINVAL;
 
-  entry = safemalloc(sizeof(struct vectorentry_s));
+  entry = malloc(sizeof(struct vectorentry_s));
   if (!entry)
     return -ENOMEM;
 
-  entry->data = safemalloc(len);
+  entry->data = malloc(len);
   if (!entry->data) {
-    safefree(entry);
+    free(entry);
     return -ENOMEM;
   }
 

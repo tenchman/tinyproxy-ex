@@ -25,7 +25,7 @@
 
 #include "conns.h"
 #include "buffer.h"
-#include "heap.h"
+
 #include "log.h"
 #ifdef FTP_SUPPORT
 #include "reqs.h"
@@ -64,11 +64,11 @@ static struct bufline_s *makenewline(unsigned char *data, size_t length)
   assert(data != NULL);
   assert(length > 0);
 
-  if (!(newline = safemalloc(sizeof(struct bufline_s))))
+  if (!(newline = malloc(sizeof(struct bufline_s))))
     return NULL;
 
-  if (!(newline->string = safemalloc(length))) {
-    safefree(newline);
+  if (!(newline->string = malloc(length))) {
+    free(newline);
     return NULL;
   }
 
@@ -94,9 +94,9 @@ static void free_line(struct bufline_s *line)
     return;
 
   if (line->string)
-    safefree(line->string);
+    free(line->string);
 
-  safefree(line);
+  free(line);
 }
 
 /*
@@ -106,7 +106,7 @@ struct buffer_s *new_buffer(void)
 {
   struct buffer_s *buffptr;
 
-  if (!(buffptr = safemalloc(sizeof(struct buffer_s))))
+  if (!(buffptr = malloc(sizeof(struct buffer_s))))
     return NULL;
 
   /*
@@ -135,7 +135,7 @@ void delete_buffer(struct buffer_s *buffptr)
     BUFFER_HEAD(buffptr) = next;
   }
 
-  safefree(buffptr);
+  free(buffptr);
 }
 
 /*

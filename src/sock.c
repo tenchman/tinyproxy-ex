@@ -24,7 +24,7 @@
 #include "tinyproxy-ex.h"
 
 #include "log.h"
-#include "heap.h"
+
 #include "sock.h"
 #include "text.h"
 
@@ -61,7 +61,7 @@ int add_listener(const char *addr, int port)
   if (listeners.total >= listeners.allocated) {
     struct sock_s *new;
 
-    new = safecalloc(listeners.allocated + 10, sizeof(struct sock_s));
+    new = calloc(listeners.allocated + 10, sizeof(struct sock_s));
     if (!new) {
       fprintf(stderr, "listener_add: oom, exiting\n");
       exit(EXIT_FAILURE);

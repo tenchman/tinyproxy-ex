@@ -20,7 +20,7 @@
 #include "tinyproxy-ex.h"
 
 #include "acl.h"
-#include "heap.h"
+
 #include "log.h"
 #include "sock.h"
 
@@ -152,7 +152,7 @@ int insert_extacl(char *aclname, acl_type_t acltype, char *location)
     rev_acl_ptr = &acl_ptr->next;
     acl_ptr = acl_ptr->next;
   }
-  new_acl_ptr = safecalloc(1, sizeof(struct extacl_s));
+  new_acl_ptr = calloc(1, sizeof(struct extacl_s));
   if (!new_acl_ptr) {
     return -1;
   }
@@ -177,7 +177,7 @@ int insert_extacl(char *aclname, acl_type_t acltype, char *location)
        * Check for a ipaddress range */
     } else if ((nptr = strchr(location, '-'))) {
       *nptr++ = '\0';
-      if (!(new_acl_ptr->rangeend = safestrdup(nptr)))
+      if (!(new_acl_ptr->rangeend = strdup(nptr)))
 	goto ERROROUT;
     } else {
       new_acl_ptr->netmask = 32;
@@ -189,10 +189,10 @@ int insert_extacl(char *aclname, acl_type_t acltype, char *location)
     new_acl_ptr->netmask = 32;
   }
 
-  if (!(new_acl_ptr->aclname = safestrdup(aclname)))
+  if (!(new_acl_ptr->aclname = strdup(aclname)))
     goto ERROROUT;
 
-  if (!(new_acl_ptr->location = safestrdup(location)))
+  if (!(new_acl_ptr->location = strdup(location)))
     goto ERROROUT;
 
   *rev_acl_ptr = new_acl_ptr;
@@ -202,10 +202,10 @@ int insert_extacl(char *aclname, acl_type_t acltype, char *location)
 
 ERROROUT:
   if (new_acl_ptr->aclname)
-    safefree(new_acl_ptr->aclname);
+    free(new_acl_ptr->aclname);
   if (new_acl_ptr->rangeend)
-    safefree(new_acl_ptr->rangeend);
-  safefree(new_acl_ptr);
+    free(new_acl_ptr->rangeend);
+  free(new_acl_ptr);
   return -1;
 }
 
@@ -292,7 +292,7 @@ find_extacl(const char *ip_address, const char *string_address, char **aclname)
   if (aclptr) {
     log_message(LOG_INFO, "%s: found acl \"%s:%s\" for connection from %s",
 		__func__, aclptr->aclname, aclptr->location, ip_address);
-    *aclname = safestrdup(aclptr->aclname);
+    *aclname = strdup(aclptr->aclname);
     return FILTER_ALLOW;
   }
   *aclname = NULL;

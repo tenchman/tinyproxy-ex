@@ -28,7 +28,7 @@
 #include "anonymous.h"
 #include "buffer.h"
 #include "daemon.h"
-#include "heap.h"
+
 #include "filter.h"
 #include "child.h"
 #include "log.h"
@@ -188,7 +188,7 @@ int main(int argc, char **argv)
       godaemon = FALSE;
       break;
     case 'c':
-      config.config_file = safestrdup(optarg);
+      config.config_file = strdup(optarg);
       if (!config.config_file) {
 	fprintf(stderr, "%s: Could not allocate memory.\n", argv[0]);
 	exit(EX_SOFTWARE);

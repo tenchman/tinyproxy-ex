@@ -20,7 +20,7 @@
 
 #include "anonymous.h"
 #include "hashmap.h"
-#include "heap.h"
+
 #include "log.h"
 
 static hashmap_t anonymous_map = NULL;

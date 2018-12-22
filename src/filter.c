@@ -23,7 +23,7 @@
 #ifdef FILTER_SUPPORT
 
 #include "filter.h"
-#include "heap.h"
+
 #include "log.h"
 #include "regexp.h"
 #include "reqs.h"
@@ -79,13 +79,13 @@ int add_new_filter(char *aclname, char *expression)
 
   /* First, add space for another pointer to the filter array. */
   config.filters =
-      saferealloc(config.filters,
+      realloc(config.filters,
 		  sizeof(struct filter_s *) * (filter_count + 1));
   if (!config.filters)
     return (-1);
 
   /* Allocate space for an actual structure */
-  config.filters[filter_count - 1] = safemalloc(sizeof(struct filter_s));
+  config.filters[filter_count - 1] = malloc(sizeof(struct filter_s));
   if (!config.filters[filter_count - 1])
     return (-1);
 
@@ -93,11 +93,11 @@ int add_new_filter(char *aclname, char *expression)
 	      aclname);
 
   /* Set values for filters structure. */
-  config.filters[filter_count - 1]->expression = safestrdup(expression);
+  config.filters[filter_count - 1]->expression = strdup(expression);
   if (!config.filters[filter_count - 1]->expression)
     return (-1);
 
-  config.filters[filter_count - 1]->aclname = safestrdup(aclname);
+  config.filters[filter_count - 1]->aclname = strdup(aclname);
   if (!config.filters[filter_count - 1]->aclname)
     return (-1);
 
@@ -123,7 +123,7 @@ static struct filter_rulelist *filter_addrule(const char *pat,
   log_message(LOG_INFO, "%s:    Adding pattern '%d' '%s'", __func__, type, pat);
 
   if (!p) {			/* head of list */
-    p = *list = safecalloc(1, sizeof(struct filter_rulelist));
+    p = *list = calloc(1, sizeof(struct filter_rulelist));
   } else {			/* next entry */
 
     /* 
@@ -133,14 +133,14 @@ static struct filter_rulelist *filter_addrule(const char *pat,
     while (p->next)
       p = p->next;
 
-    p->next = safecalloc(1, sizeof(struct filter_rulelist));
+    p->next = calloc(1, sizeof(struct filter_rulelist));
     p = p->next;
   }
 
   if (p) {
     p->type = type;
-    if (!(p->pat = safestrdup(pat))) {
-      safefree(p);
+    if (!(p->pat = strdup(pat))) {
+      free(p);
       p = NULL;
     }
   }
@@ -164,7 +164,7 @@ static void filter_read_catlist(void)
     int i = 0;
     while (i < MAX_CATEGORIES && fgets(buf, FILTER_BUFFER_LEN, fd)) {
       buf[strlen(buf) - 1] = '\0';
-      if (!(catlist[i++] = safestrdup(buf))) {
+      if (!(catlist[i++] = strdup(buf))) {
 	log_message(LOG_ERR, "%s: memory problem", __func__);
 	goto COMMON_EXIT;
       }
@@ -266,7 +266,7 @@ static void filter_read(const char *filename, struct filter_rulelist **list)
 	  filter_read_catlist();
       } else {
 	/* precompile the regexes */
-	p->cpat = safemalloc(sizeof(regex_t));
+	p->cpat = malloc(sizeof(regex_t));
 
 	if ((err = regcomp(p->cpat, p->pat, cflags)) != 0) {
 	  fprintf(stderr, "Bad regex in %s: %s\n", filename, p->pat);
@@ -307,12 +307,12 @@ void filter_init(void)
 	log_message(LOG_INFO, "%s: New Filter for %s", __func__, f->aclname);
 
 	if (!p) {		/* head of list */
-	  p = fl = safecalloc(1, sizeof(struct filter_list));
+	  p = fl = calloc(1, sizeof(struct filter_list));
 	} else {		/* next entry */
-	  p->next = safecalloc(1, sizeof(struct filter_list));
+	  p->next = calloc(1, sizeof(struct filter_list));
 	  p = p->next;
 	}
-	p->aclname = safestrdup(f->aclname);
+	p->aclname = strdup(f->aclname);
 	q = p;
       } else {
 	log_message(LOG_INFO, "%s: Found Filter for %s", __func__, f->aclname);
@@ -335,15 +335,15 @@ void filter_destroy(void)
       for (r = s = p->rules; r; r = s) {
 	if (r->cpat) {
 	  regfree(r->cpat);
-	  safefree(r->cpat);
+	  free(r->cpat);
 	}
-	safefree(r->pat);
+	free(r->pat);
 	s = r->next;
-	safefree(r);
+	free(r);
       }
-      safefree(p->aclname);
+      free(p->aclname);
       q = p->next;
-      safefree(p);
+      free(p);
     }
     fl = NULL;
     filterlist_initialized = 0;

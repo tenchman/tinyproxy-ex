@@ -21,7 +21,7 @@
 #include "common.h"
 #include "buffer.h"
 #include "conns.h"
-#include "heap.h"
+
 #include "htmlerror.h"
 #include "network.h"
 #include "utils.h"
@@ -35,19 +35,19 @@ int add_new_errorpage(char *filepath, unsigned int errornum)
 
   /* First, add space for another pointer to the errorpages array. */
   config.errorpages =
-      saferealloc(config.errorpages,
+      realloc(config.errorpages,
 		  sizeof(struct error_pages_s *) * (errorpage_count + 1));
   if (!config.errorpages)
     return (-1);
 
   /* Allocate space for an actual structure */
   config.errorpages[errorpage_count - 1] =
-      safemalloc(sizeof(struct error_pages_s));
+      malloc(sizeof(struct error_pages_s));
   if (!config.errorpages[errorpage_count - 1])
     return (-1);
 
   /* Set values for errorpage structure. */
-  config.errorpages[errorpage_count - 1]->errorpage_path = safestrdup(filepath);
+  config.errorpages[errorpage_count - 1]->errorpage_path = strdup(filepath);
   if (!config.errorpages[errorpage_count - 1]->errorpage_path)
     return (-1);
 
@@ -204,11 +204,11 @@ int add_error_variable(struct conn_s *connptr, char *key, char *val)
   /* Add space for a new pointer to the error_variables structure. */
   if (!connptr->error_variables)
     connptr->error_variables =
-	safemalloc(sizeof(struct error_variables_s *) *
+	malloc(sizeof(struct error_variables_s *) *
 		   connptr->error_variable_count);
   else
     connptr->error_variables =
-	saferealloc(connptr->error_variables,
+	realloc(connptr->error_variables,
 		    sizeof(struct error_variable_s *) *
 		    connptr->error_variable_count);
 
@@ -217,15 +217,15 @@ int add_error_variable(struct conn_s *connptr, char *key, char *val)
 
   /* Allocate a new variable mapping structure. */
   connptr->error_variables[connptr->error_variable_count - 1] =
-      safemalloc(sizeof(struct error_variable_s));
+      malloc(sizeof(struct error_variable_s));
   if (!connptr->error_variables[connptr->error_variable_count - 1])
     return (-1);
 
   /* Set values for variable mapping. */
   connptr->error_variables[connptr->error_variable_count - 1]->error_key =
-      safestrdup(key);
+      strdup(key);
   connptr->error_variables[connptr->error_variable_count - 1]->error_val =
-      safestrdup(val);
+      strdup(val);
   if ((!connptr->error_variables[connptr->error_variable_count - 1]->error_key)
       || (!connptr->
 	  error_variables[connptr->error_variable_count - 1]->error_val))
@@ -276,7 +276,7 @@ int indicate_http_error(struct conn_s *connptr, int number, char *message, ...)
   }
 
   connptr->error_number = number;
-  connptr->error_string = safestrdup(message);
+  connptr->error_string = strdup(message);
 
   va_end(ap);
 
