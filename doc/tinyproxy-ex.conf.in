@@ -6,8 +6,8 @@
 # Name of the user the tinyproxy daemon should switch to after the port
 # has been bound.
 #
-User nobody
-Group nogroup
+User  tinyproxy-ex
+Group tinyproxy-ex
 
 # The socket addresses where tinyproxy-ex will listen for HTTP client
 # requests. You may specify multiple socket addresses on multiple lines.
